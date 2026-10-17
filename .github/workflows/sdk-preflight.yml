@@ -1,0 +1,25 @@
+name: Apple SDK preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-sdk-preflight
+  cancel-in-progress: true
+
+jobs:
+  sdk-check:
+    # Standard runners are free for public repositories. Private execution is intentionally blocked.
+    if: github.event.repository.private == false
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - name: Checkout the verification source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile the iOS SDK probe
+        run: bash ios-sdk-check/scripts/ios-sdk-preflight.sh
