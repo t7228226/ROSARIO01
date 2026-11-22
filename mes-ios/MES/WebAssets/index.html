@@ -1,0 +1,2785 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' file:; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b5d44">
+<title>MES 工單巡檢核對 v0.5.9 iOS</title>
+<style>
+:root{--bg:#f2f6f4;--card:#fff;--ink:#17201d;--muted:#6d7b75;--line:#d8e1dd;--brand:#0b6b4d;--brand2:#084c38;--ok:#0b8f55;--warn:#d28b00;--bad:#c92e2e;--info:#2768b2;--shadow:0 10px 30px rgba(14,55,42,.08)}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--brand2),var(--brand));color:#fff;padding:15px 18px;box-shadow:0 2px 12px rgba(0,0,0,.14)}
+header h1{font-size:20px;margin:0 0 3px} header p{margin:0;opacity:.86;font-size:13px}
+main{max-width:1050px;margin:0 auto;padding:16px 14px 48px}
+.workflowBar{display:flex;align-items:center;gap:8px;margin-bottom:14px}.workflowTitle{flex:1;border-radius:12px;padding:12px 14px;font-weight:900;background:var(--brand);color:#fff;text-align:center;font-size:15px;cursor:pointer}.modeSwitch{background:#e5eeea;color:#234b3e;white-space:nowrap}@media(max-width:700px){.workflowBar{align-items:stretch}.modeSwitch{padding-left:10px;padding-right:10px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+.card h2{font-size:17px;margin:0 0 12px}.card h3{font-size:15px;margin:14px 0 8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:0 0 5px} input,textarea,select{width:100%;border:1px solid #cbd7d1;border-radius:10px;padding:11px 12px;font:inherit;background:white;color:var(--ink)}textarea{min-height:210px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+button{border:0;border-radius:11px;padding:11px 14px;font-weight:800;font-size:14px;cursor:pointer}button:disabled{cursor:not-allowed;opacity:1}.primary{background:var(--brand);color:white}.secondary{background:#e5eeea;color:#234b3e}.danger{background:#fee3e3;color:#8f2020}.ghost{background:#fff;border:1px solid var(--line);color:#315247}.info{background:#e6f0fb;color:#214f80}.wide{width:100%}.startLocked{background:#c92e2e!important;color:#fff!important}.startReady{background:var(--brand)!important;color:#fff!important}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#e8f3ee;color:#215b48;font-size:12px;font-weight:800}.badge.photo{background:#e8effb;color:#274f87}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f5f8f7;border-radius:12px;padding:12px;text-align:center}.stat b{font-size:24px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:760px}th,td{padding:9px 10px;border-bottom:1px solid #e8eeeb;text-align:left;font-size:13px;vertical-align:top}th{background:#f5f8f7;position:sticky;top:0}tr:last-child td{border-bottom:0}
+#qrBox{display:grid;place-items:center;background:white;padding:16px;border-radius:14px;min-height:250px;border:1px dashed #b8c7c0}#qrBox canvas{max-width:100%;height:auto;image-rendering:pixelated}.codebox{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all;background:#f5f8f7;border-radius:10px;padding:10px;max-height:130px;overflow:auto}.hidden{display:none!important}
+.scanHero{border-radius:18px;padding:22px;text-align:center;color:white;background:#365d50;transition:.18s;min-height:180px;display:flex;flex-direction:column;justify-content:center}.scanHero.ok{background:var(--ok)}.scanHero.warn{background:var(--warn)}.scanHero.bad{background:var(--bad)}.scanHero.info{background:var(--info)}.scanHero h2{font-size:28px;margin:0 0 8px}.scanHero .code{font-size:20px;font-weight:900;word-break:break-all}.scanHero .desc{font-size:14px;margin-top:8px;opacity:.92}
+#videoWrap,#taskQrVideoWrap{position:relative;background:#0c1713;border-radius:16px;overflow:hidden;aspect-ratio:4/3}#video,#taskQrVideo{width:100%;height:100%;object-fit:cover}.taskLoadPrimary{display:grid;grid-template-columns:1fr 1fr;gap:8px}.taskLoadPrimary button{min-height:54px;font-size:15px}details.taskMore{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}details.taskMore summary{cursor:pointer;font-weight:800;color:#315247;padding:6px 0}.reticle{position:absolute;left:8%;right:8%;top:36%;height:28%;border:3px solid rgba(255,255,255,.9);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.25)}.laser{position:absolute;left:10%;right:10%;top:50%;height:2px;background:#ff4141;box-shadow:0 0 9px #ff4141}
+.itemlist{display:grid;gap:8px}.item{border:1px solid var(--line);border-radius:12px;padding:11px 12px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}.dot{width:12px;height:12px;border-radius:50%;background:#c7d2cd}.item.done .dot{background:var(--ok)}.item .mc{font-weight:900;word-break:break-all}.item small{display:block;color:var(--muted);margin-top:2px;line-height:1.45}.qty{text-align:right;font-weight:900;white-space:nowrap}
+.notice{padding:10px 12px;border-radius:10px;background:#fff4d8;color:#795600;font-size:13px;line-height:1.55}.oknote{background:#e3f6ec;color:#12633e}.badnote{background:#fde6e6;color:#8b2424}.infonote{background:#eaf2fb;color:#204d7a}.footerNote{font-size:12px;color:var(--muted);line-height:1.6}
+.photoGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}.photoCard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.photoCard img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#e9eeeb;display:block}.photoMeta{padding:8px;font-size:12px;line-height:1.4}.photoMeta b{display:block;word-break:break-all}
+#photoModal,#photoSummaryModal,#manualReviewModal,#checkReportModal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:14px}#photoModal .modal,#photoSummaryModal .modal,#manualReviewModal .modal,#checkReportModal .modal{background:#fff;border-radius:16px;max-width:620px;width:100%;max-height:92vh;overflow:auto;padding:15px}#photoPreview,#manualReviewPreview{width:100%;max-height:45vh;object-fit:contain;background:#111;border-radius:12px}.summaryTitle{font-size:22px;font-weight:900;margin:0 0 4px}.summaryState{font-size:14px;font-weight:800;margin-bottom:12px}.summaryGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.summaryCell{border:1px solid var(--line);border-radius:12px;padding:11px;background:#f7faf8}.summaryCell small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}.summaryCell b{font-size:20px}.summaryCell.good{background:#edf9f2;border-color:#bfe1cf}.summaryCell.bad{background:#fff2f2;border-color:#edc1c1}.summaryCell.warn{background:#fff8e9;border-color:#ecd49e}.reviewMeta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.reviewMeta div{border:1px solid var(--line);border-radius:10px;padding:9px;font-size:12px}.reviewMeta small{display:block;color:var(--muted);margin-bottom:2px}.reviewActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.reportConfirmBox{border:1px solid var(--line);border-radius:12px;padding:12px;background:#f7faf8;margin-top:10px}.reportConfirmBox small{display:block;color:var(--muted);font-size:11px;margin-bottom:3px}.reportConfirmBox b{display:block;font-size:17px;word-break:break-all}.reportView{display:grid;gap:10px}.reportHeaderGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.reportField{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f7faf8}.reportField small{display:block;color:var(--muted);font-size:11px;margin-bottom:3px}.reportField b{display:block;font-size:16px;word-break:break-all}.reportResultBox{border-radius:14px;padding:14px;background:#edf9f2;border:1px solid #bfe1cf}.reportResultBox small{display:block;color:#376553;font-size:12px}.reportResultBox b{display:block;font-size:28px;margin-top:2px}.reportNameList{display:grid;gap:7px;margin-top:6px}.reportNameItem{border:1px solid #dce6e1;border-radius:10px;padding:9px 10px;background:#fff;font-size:13px}.reportNameItem b{display:block}.reportEmpty{color:var(--muted);font-size:13px}
+.metaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metaBox{background:#f6f8f7;border-radius:10px;padding:9px}.metaBox small{display:block;color:var(--muted)}.metaBox b{display:block;margin-top:2px;word-break:break-word}
+.batchBox{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#f8faf9}.progressTrack{height:9px;border-radius:999px;background:#e4ebe8;overflow:hidden;margin-top:7px}.progressBar{height:100%;width:0;background:var(--brand);transition:width .2s}.mini{font-size:12px;color:var(--muted);line-height:1.5}.ocrTag{display:inline-block;padding:2px 6px;border-radius:999px;background:#eef3f1;font-size:11px;font-weight:800;color:#45635a}
+.completionBanner{border-radius:14px;padding:15px 16px;font-size:14px;line-height:1.6}.completionBanner.ok{background:#e3f6ec;color:#12633e;border:1px solid #b7e3cd}.completionBanner.warn{background:#fff0e8;color:#8a3b1c;border:1px solid #f1c3ad}.completionBanner b{display:block;font-size:19px;margin-bottom:2px}.outcomeGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.outcomePanel{border:1px solid var(--line);border-radius:14px;padding:13px;min-width:0}.outcomePanel.okPanel{background:#f1faf5;border-color:#bfe1cf}.outcomePanel.badPanel{background:#fff5f5;border-color:#ecc5c5}.outcomePanel h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}.resultCount{font-size:12px;border-radius:999px;padding:4px 8px;background:#fff;font-weight:900}.outcomeRows{display:grid;gap:7px}.outcomeRow{background:#fff;border:1px solid #e1e8e5;border-radius:10px;padding:9px 10px;font-size:12px;line-height:1.5}.outcomeRow b{display:block;font-size:13px;word-break:break-all}.outcomeRow.badRow{border-color:#efcccc}.abnormalToggle{width:100%;background:#c92e2e;color:#fff;margin-top:6px}.abnormalToggle:disabled{background:#e7cccc;color:#8f6666}.abnormalDetailTable{margin-top:10px}.abnormalDetailTable table{min-width:620px}.abnormalPhoto{width:84px;height:64px;object-fit:cover;border-radius:7px;background:#eee}
+@media(max-width:700px){.row,.row3,.row4,.metaGrid,.taskLoadPrimary,.outcomeGrid,.reviewActions{grid-template-columns:1fr}.statgrid{grid-template-columns:repeat(2,1fr)}main{padding:12px 10px 38px}.card{padding:13px}header h1{font-size:18px}button{min-height:44px}.item{grid-template-columns:auto 1fr}.qty{grid-column:2;text-align:left}.photoGrid{grid-template-columns:repeat(2,1fr)}}
+/* Inspection workspace */
+:root{--bg:#eaf1ed;--ink:#142f27;--muted:#4b655c;--line:#d2e1d8;--brand:#075e45;--brand2:#0b3a30;--ok:#09603f;--warn:#86550a;--bad:#a72332;--info:#235a7c;--shadow:0 2px 6px #17362d0a}
+body{line-height:1.45}
+header{padding:0;background:#103b30;box-shadow:none;border-bottom:1px solid #225245}
+.appBar{max-width:1050px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.appName{display:flex;align-items:center;gap:9px;min-width:0}
+.appMark{color:#103b30;background:#d5f1e1;border-radius:7px;padding:4px 5px;font-size:11px;font-weight:900;letter-spacing:.03em}
+header h1{font-size:17px;line-height:1.25;margin:0;font-weight:750}
+.localStatus{font-size:12px;color:#d2f3df;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.localStatus::before{content:'';width:7px;height:7px;border-radius:50%;background:#7fdfac}
+main{padding-top:14px}
+.workflowBar{justify-content:space-between;align-items:center;margin:0 0 12px;gap:8px;flex-wrap:wrap}
+.workflowTitle{flex:1;background:none;color:var(--ink);text-align:left;padding:0;font-size:21px;margin:0;cursor:default}
+.workflowBar button{white-space:normal}
+.card{border-radius:13px}
+.card h2{font-size:18px;line-height:1.3}
+button,summary{touch-action:manipulation}
+button{min-height:48px;border-radius:9px}
+button:disabled,.startLocked{background:#edf1ee!important;color:#556960!important;border:1px solid #d6e1da;cursor:not-allowed}
+:is(button,input,textarea,select,summary,[tabindex]):focus-visible{outline:3px solid #116b97;outline-offset:2px}
+:is(input,select,textarea){scroll-margin-block:72px}
+.btns{gap:8px}
+.startOptions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.startOptions button{flex:1;min-width:0}
+#resumeTaskBtn{text-align:left;overflow-wrap:anywhere}
+.inputNote{color:var(--muted);font-size:13px;margin:6px 0 0}
+.workCard{padding:12px 14px}
+.workHeading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.workHeading>div{min-width:0}
+.workHeading small{display:block;color:var(--muted);font-size:12px}
+#scanWO{display:block;overflow-wrap:anywhere;font-size:21px;font-weight:900}
+.workHeading button{flex-shrink:0}
+.workDetails{font-size:12px;color:var(--muted);margin:3px 0 9px;display:flex;gap:6px 14px;flex-wrap:wrap;overflow-wrap:anywhere}
+.statgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;border:1px solid var(--line);border-radius:9px;background:var(--line);overflow:hidden}
+.stat{border-radius:0;background:#f5f9f6;padding:7px 2px;line-height:1.2}
+.stat b{font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px}
+.workProgress{height:5px;margin:9px 0;background:#dce8df}
+.workProgress .progressBar{background:#138255}
+.scanHero{min-height:0;text-align:left;align-items:flex-start;border-radius:9px;padding:11px 13px;background:#edf5ef;color:#214c3b;border-left:4px solid #589a7c}
+.scanHero.ok{background:#def3e7;color:#075638;border-color:#198557}
+.scanHero.warn{background:#fff2d9;color:#714709;border-color:#a66a14}
+.scanHero.bad{background:#ffedf0;color:#872337;border-color:#ab3448}
+.scanHero.info{background:#e9f3fa;color:#174b6b;border-color:#297bad}
+.scanHero h2{font-size:17px;margin:0}
+.scanHero .code{font-size:15px;font-weight:750;overflow-wrap:anywhere}
+.scanHero .desc{font-size:12px;margin:2px 0 0;opacity:1}
+.scanActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0 4px}
+.scanActions #cameraBtn,.scanActions #photoSessionBtn{min-height:53px;font-size:15px}
+.manualRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.scanPanel h3{font-size:13px;margin-bottom:5px}
+.manualRow input,.reviewActions select{font-size:16px}
+.bodyStatus{margin:7px 0 0;overflow-wrap:anywhere}
+.inlineFeedback{margin:0 0 10px;overflow-wrap:anywhere}
+.photoShelf>summary{font-size:17px;font-weight:800;min-height:48px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.photoShelf>summary::before{content:'›';font-size:24px;color:var(--brand)}
+.photoShelf[open]>summary::before{transform:rotate(90deg)}
+.item{grid-template-columns:auto minmax(0,1fr) auto;gap:8px}
+.item .qty{grid-column:auto;text-align:right;white-space:normal;max-width:90px}
+.item .mc{overflow-wrap:anywhere;word-break:normal}
+.item small{min-width:0;overflow-wrap:anywhere}
+.outcomePanel h3{margin-top:0}
+.modal{overscroll-behavior:contain}
+#bomPhotoModal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:10px}
+#bomPhotoModal .modal{background:#fff;border-radius:16px;width:min(100%,620px);max-height:min(92vh,calc(100dvh - 20px));overflow:auto;padding:14px}
+.bomPhotoActions{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.bomPhotoActions button{min-height:44px}
+.bomPhotoFrame{margin:8px 0;max-height:32vh;overflow:auto;background:#182722;border-radius:10px;overscroll-behavior:contain}
+.bomPhotoFrame img{display:block;width:100%;height:auto;max-height:32vh;object-fit:contain}
+.bomPhotoFrame.zoom img{width:220%;max-width:none;max-height:none}
+.bomPhotoActions .info{font-weight:850}
+.bomPhotoRows{display:grid;gap:5px;margin:8px 0}
+.bomPhotoRow{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:6px;align-items:center}
+.bomPhotoRow span{text-align:center;color:var(--muted);font-size:13px}
+.bomPhotoRow input,.bomPhotoOrder{width:100%;min-width:0;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:7px;font-size:16px;font-family:ui-monospace,monospace;color:var(--ink);background:#fff}
+.bomPhotoRow button{min-height:44px;padding:8px}
+.bomPhotoRow input[aria-invalid="true"],.bomPhotoOrder[aria-invalid="true"]{border-color:#ba5a48;background:#fff6ef}
+.bomPhotoRow input:disabled{opacity:.65}
+.bomPhotoConfirm{display:flex;align-items:flex-start;gap:9px;min-height:44px;padding:8px 2px;margin-top:6px}
+.bomPhotoConfirm input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:#19664d}
+#bomPhotoStatus.warnnote{background:#fff4df;color:#714708}
+.summaryTitle{overflow-wrap:anywhere}
+.taskLoadPrimary{grid-template-columns:repeat(2,minmax(0,1fr))}
+.taskLoadPrimary button{padding:8px;min-height:48px}
+@media(max-width:370px){
+  .workflowTitle{font-size:18px}
+  main{padding-inline:9px}
+  .appBar{padding-inline:12px}
+  .startOptions button,.scanActions button,.scanActions #cameraBtn,.scanActions #photoSessionBtn{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="appBar"><div class="appName"><span class="appMark" aria-hidden="true">MES</span><h1>工單巡檢核對</h1></div><span class="localStatus">離線作業</span></div></header>
+<main>
+<div class="workflowBar"><h2 class="workflowTitle" id="workflowTitle" tabindex="-1">巡檢任務</h2><button class="modeSwitch startLocked hidden" id="modeSwitchBtn" disabled>開始巡檢</button></div>
+<div id="appFeedback" class="notice badnote inlineFeedback hidden" role="alert"></div>
+
+<section id="genPage">
+  <div class="startOptions"><button class="primary hidden" id="resumeTaskBtn"></button><button class="ghost" id="openTaskLoadBtn">載入既有任務</button></div>
+  <div class="card">
+    <h2>匯入工單 BOM 明細</h2>
+    <div class="btns">
+      <button class="primary" id="excelPickBtn">選擇 Excel 檔案</button>
+      <button class="info hidden" id="bomPhotoBtn">拍攝 BOM</button>
+      <input type="file" id="excelFile" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroenabled.12" class="hidden">
+      <button class="ghost" id="clearImportBtn">清除資料</button>
+    </div>
+    <div id="excelInfo" class="inputNote" role="status">支援 .xlsx／.xlsm，自動尋找 BOM 明細工作表。</div>
+    <h3><label for="bomText">或貼上 MES／Excel 明細</label></h3>
+    <textarea id="bomText" placeholder="在這裡貼上 MES / Excel 資料…
+
+例如：
+序號    料號    品名    規格    應發量"></textarea>
+    <div class="btns"><button class="primary wide" id="buildBtn" disabled>建立任務</button></div>
+    <div id="sourceInfo" class="notice infonote hidden" style="margin-top:10px"></div>
+    <div id="parseInfo" class="inputNote" role="status"></div>
+    
+  </div>
+
+  <div class="card hidden" id="genResult">
+    <h2>巡檢任務已產生 <span class="badge" id="genCount"></span></h2>
+    <div class="notice infonote" style="margin-bottom:12px;font-size:15px"><b>工單號碼：</b><span id="genWorkOrder" style="font-weight:900"></span></div>
+    <div class="tablewrap" style="margin-bottom:14px"><table id="generatedBomTable"><thead><tr><th>序號</th><th>料號</th><th>品名</th><th>規格</th><th>應發量</th></tr></thead><tbody id="generatedBomBody"></tbody></table></div>
+    <div class="row hidden" id="taskExportRow">
+      <div><div id="qrBox"></div><div class="footerNote" style="margin-top:8px">QR 為「精簡任務」：工單＋料號＋應發量＋單位。完整規格仍保留在 JSON 任務檔與任務資料中。</div></div>
+      <div><label>任務碼</label><div class="codebox" id="taskCode"></div><div class="btns"><button class="secondary" id="copyCode">複製任務碼</button><button class="secondary" id="downloadTask">儲存完整任務 JSON</button><button class="primary" id="loadIntoScan">開始巡檢</button></div><p id="taskExportFeedback" class="inputNote" role="status"></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="scanPage" class="hidden">
+  <div class="card" id="loadCard">
+    <h2>載入巡檢任務</h2>
+    <div id="autoLoadMsg" class="notice hidden"></div>
+    <p class="inputNote">掃描工單 QR，或以完整任務 JSON 保留品名與規格。</p>
+    <div class="taskLoadPrimary" style="margin-top:12px">
+      <button class="primary" id="taskQrCameraBtn">掃描工單 QR</button>
+      <button class="secondary" id="taskQrImageBtn">選擇 QR 照片</button>
+    </div>
+    <input id="taskQrCameraInput" class="hidden" type="file" accept="image/*" capture="environment">
+    <input id="taskQrImageInput" class="hidden" type="file" accept="image/*">
+    <div id="taskQrVideoWrap" class="hidden" style="margin-top:12px"><video id="taskQrVideo" playsinline muted></video><div class="reticle"></div><div class="laser"></div></div>
+    <div id="taskQrSupport" class="inputNote" role="status"></div>
+    <details class="taskMore">
+      <summary>其他載入方式：貼上任務碼 / JSON</summary>
+      <label for="importCode" style="margin-top:8px">貼上任務碼</label><textarea id="importCode" style="min-height:90px" placeholder="MESCHK2:..."></textarea>
+      <div class="btns"><button class="secondary" id="importTaskBtn">載入任務碼</button><button class="secondary" id="importTaskFileBtn">讀取完整任務 JSON</button><input type="file" id="taskFile" accept="application/json,.json" class="hidden"></div>
+    </details>
+  </div>
+
+  <div id="activeTask" class="hidden">
+    <div class="card workCard">
+      <div class="workHeading"><div><small>目前工單</small><b id="scanWO"></b></div><button class="ghost" id="switchTaskBtn">切換工單</button></div>
+      <div class="workDetails"><span>投產 <b id="scanProd"></b></span><span>任務時間 <b id="scanTime"></b></span></div>
+      <div class="statgrid">
+        <div class="stat"><b id="totalN">0</b><span>料號總數</span></div>
+        <div class="stat"><b id="doneN">0</b><span>已核對</span></div>
+        <div class="stat"><b id="leftN">0</b><span>尚未核對</span></div>
+        <div class="stat"><b id="photoN">0</b><span>照片證據</span></div>
+      </div>
+      <div id="workProgress" class="progressTrack workProgress" role="progressbar" aria-label="工單料號核對進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progressBar"></div></div>
+      <p id="legacyPhotoNotice" class="notice hidden">這份工單含舊版自動照片判定。紀錄已保留，正式採用前請複核。</p>
+    </div>
+
+    <div class="card scanPanel">
+      <div class="scanHero" id="scanHero" role="status"><h2>等待核對</h2><div class="code"></div><div class="desc">掃條碼，或拍照辨識料號。</div></div>
+      <div class="scanActions"><button class="primary" id="cameraBtn">掃描一維條碼</button><button class="primary" id="photoSessionBtn">連續拍照核對</button><button class="secondary" id="photoBtn">單張拍照</button><button class="secondary" id="photoBatchBtn">相簿多選</button><input id="photoInput" class="hidden" type="file" accept="image/*" capture="environment"><input id="photoBatchInput" class="hidden" type="file" accept="image/*" multiple><button class="ghost" id="stopCameraBtn">停止相機</button></div>
+      <div id="cameraSupport" class="footerNote bodyStatus" role="status"></div>
+      <div id="photoBatchBox" class="batchBox hidden"><b id="photoBatchTitle">照片辨識中</b><div id="photoBatchStatus" class="mini" role="status">準備中…</div><div class="progressTrack"><div id="photoBatchBar" class="progressBar"></div></div></div>
+      <div id="videoWrap" class="hidden" style="margin-top:12px"><video id="video" playsinline muted></video><div class="reticle"></div><div class="laser"></div></div>
+      <h3><label for="manualCode">手動輸入／條碼槍</label></h3>
+      <div class="manualRow"><input id="manualCode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="輸入完整料號"><button class="ghost" id="checkBtn">核對</button></div>
+      <div class="btns"><button class="danger hidden" id="quickReviewBtn">人工查驗</button></div>
+    </div>
+
+    <div class="card hidden" id="completionResult">
+      <h2>核對結果</h2>
+      <div class="completionBanner ok" id="completionBanner"><b id="completionTitle">核對完成</b><span id="completionCounts"></span></div>
+      <div class="btns">
+        <button class="primary" id="completionQualifiedBtn" type="button">合格 0 項</button>
+        <button class="danger" id="completionAbnormalToggle" type="button">異常 0 筆</button>
+      </div>
+      <div class="footerNote" style="margin-top:8px">異常明細預設收合；點「異常」才會顯示全部核對失敗內容。</div>
+    </div>
+
+    <div class="card">
+      <h2>工單用料 <span class="badge" id="progressBadge"></span></h2>
+      <div class="itemlist" id="itemList"></div>
+    </div>
+
+    <details class="card photoShelf" id="photoShelf">
+      <summary>照片證據 <span class="badge photo" id="photoBadge">0 張</span></summary>
+      <div id="photoGrid" class="photoGrid" style="margin-top:10px"></div>
+      <button id="morePhotosBtn" class="ghost hidden" type="button">顯示較早的照片</button>
+    </details>
+
+    <div class="card">
+      <h2>核對成果</h2>
+      <div class="outcomeGrid">
+        <section class="outcomePanel okPanel">
+          <h3><span>✓ 合格</span><span class="resultCount" id="qualifiedCount">0 項</span></h3>
+          <div class="outcomeRows" id="qualifiedResults"><div class="footerNote">尚無合格資料。</div></div>
+        </section>
+        <section class="outcomePanel badPanel">
+          <h3><span>✕ 異常</span><span class="resultCount" id="abnormalCount">0 筆</span></h3>
+          <div id="abnormalResults" class="footerNote">目前無異常紀錄。</div>
+          <button class="abnormalToggle" id="abnormalToggle" type="button" disabled>查看異常資料</button>
+          <div id="abnormalDetails" class="abnormalDetailTable hidden"></div>
+          <button class="primary wide" id="manualReviewBtn" type="button" disabled style="margin-top:8px">人工查驗判定</button>
+        </section>
+      </div>
+      <div class="btns"><button class="primary" id="checkReportBtn">核對回報</button><button class="secondary" id="exportReport">匯出完整報告</button><button class="danger" id="resetProgress">清除本工單進度</button></div><p id="exportFeedback" class="inputNote" role="status"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div id="photoSummaryModal" class="hidden"><div class="modal"><div class="summaryTitle">照片核對結果</div><div class="summaryState" id="summaryState">核對完成</div><div id="summaryError" class="notice badnote hidden" role="alert"></div><div class="summaryGrid"><div class="summaryCell"><small>工單號碼</small><b id="summaryWorkOrder" style="font-size:15px;word-break:break-all">—</b></div><div class="summaryCell"><small>收到照片</small><b id="summaryReceived">0 張</b></div><div class="summaryCell good"><small>合格</small><b id="summaryQualified">0 張</b></div><div class="summaryCell bad"><small>異常</small><b id="summaryAbnormal">0 張</b></div><div class="summaryCell warn"><small>其中無法辨識</small><b id="summaryUnreadable">0 張</b></div></div><div class="footerNote" style="margin-top:10px">「異常」包含：無法辨識，以及辨識到內容但與 BOM 料號核對不正確。</div><div class="btns"><button class="primary" id="summaryCloseBtn">確認</button><button class="danger hidden" id="summaryManualBtn">前往人工查驗</button></div></div></div>
+<div id="manualReviewModal" class="hidden"><div class="modal"><div class="summaryTitle">人工查驗判定</div><div id="manualReviewPosition" class="footerNote" style="margin-bottom:8px">異常 1 / 1</div><img id="manualReviewPreview" class="hidden" alt="異常照片"><div id="manualReviewNoPhoto" class="notice infonote hidden">此筆異常沒有照片，可直接人工指定 BOM 料號，或重新補照。</div><div class="reviewMeta"><div><small>目前判定</small><b id="manualReviewStatus">—</b></div><div><small>辨識內容</small><b id="manualReviewDetected" style="word-break:break-all">—</b></div></div><div id="manualReviewOcr" class="footerNote" style="margin-top:8px;white-space:pre-wrap"></div><div style="margin-top:10px"><label for="manualReviewSelect">確認後選擇對應的 BOM 料號</label><select id="manualReviewSelect"></select></div><div class="reviewActions"><button class="primary" id="manualReviewConfirmBtn" disabled>人工判定為合格</button><button class="info" id="manualReviewRetakeBtn">重新補照</button></div><input id="manualReviewRetakeInput" class="hidden" type="file" accept="image/*" capture="environment"><div id="manualReviewError" class="notice badnote hidden" role="alert"></div><div class="btns"><button class="ghost" id="reviewPreviousBtn">上一筆</button><button class="ghost" id="reviewNextBtn">下一筆</button><button class="ghost" id="manualReviewCloseBtn">關閉</button></div></div></div>
+
+<div id="bomPhotoModal" class="hidden"><div class="modal">
+  <div class="summaryTitle">BOM 照片匯入</div>
+  <div class="footerNote">拍清楚工單編號、序號及完整料號欄。照片只在裝置上辨識，建立任務時只匯入核對過的文字。</div>
+  <div class="bomPhotoActions">
+    <button class="info" id="bomCameraBtn">開啟相機</button>
+    <button class="ghost" id="bomGalleryBtn">選取照片</button>
+    <button class="ghost" id="bomCloseBtn">取消</button>
+    <input type="file" id="bomPhotoInput" accept="image/*" class="hidden">
+  </div>
+  <div class="notice infonote" id="bomPhotoStatus" role="status"></div>
+  <div id="bomDraft" class="hidden">
+    <div class="bomPhotoActions">
+      <button class="ghost" id="bomPreviewBtn" aria-controls="bomPhotoFrame" aria-expanded="true">收起照片</button>
+      <button class="ghost" id="bomZoomBtn" aria-pressed="false">放大照片</button>
+      <button class="ghost" id="bomRotateBtn">旋轉照片</button>
+    </div>
+    <div id="bomPhotoFrame" class="bomPhotoFrame"><img id="bomPhotoPreview" alt="待核對的 BOM 照片"></div>
+    <label for="bomPhotoOrder">工單編號</label>
+    <input id="bomPhotoOrder" class="bomPhotoOrder" maxlength="48" placeholder="請對照照片填寫" autocomplete="off" spellcheck="false" autocapitalize="characters">
+    <h3>料號明細</h3>
+    <div class="footerNote">請逐列比對原圖，特別留意 0／O、1／I。缺漏可補填或新增列。</div>
+    <div id="bomPhotoRows" class="bomPhotoRows"></div>
+    <button class="ghost" id="bomAddRowBtn">新增料號列</button>
+    <label class="bomPhotoConfirm"><input type="checkbox" id="bomPhotoChecked"><span id="bomPhotoAgreement">我已核對工單及完整料號清單。</span></label>
+    <div id="bomPhotoValidation" class="inputNote" role="status"></div>
+    <div class="btns"><button class="primary wide" id="bomPhotoApply" disabled>確認並建立任務</button></div>
+  </div>
+</div></div>
+
+<div id="checkReportModal" class="hidden"><div class="modal">
+  <div id="checkReportSetup">
+    <div class="summaryTitle">核對回報</div>
+    <div class="summaryState">請選擇班別並確認目前工單</div>
+    <div style="margin-top:10px"><label for="reportShiftSelect">班別</label><select id="reportShiftSelect"><option value="">請選擇班別</option><option value="DA">DA</option><option value="DB">DB</option><option value="NA">NA</option><option value="NB">NB</option></select></div>
+    <div class="reportConfirmBox"><small>確認工單</small><b id="reportConfirmWorkOrder">—</b></div>
+    <div class="btns"><button class="primary" id="reportConfirmBtn" disabled>產生回報</button><button class="ghost" id="reportCancelBtn">取消</button></div>
+  </div>
+  <div id="checkReportView" class="hidden reportView">
+    <div class="summaryTitle">核對回報</div>
+    <div class="reportHeaderGrid">
+      <div class="reportField"><small>日期</small><b id="reportDate">—</b></div>
+      <div class="reportField"><small>班別</small><b id="reportShift">—</b></div>
+      <div class="reportField"><small>工單號碼</small><b id="reportWorkOrder">—</b></div>
+    </div>
+    <div class="reportResultBox"><small>合格照片／收到照片</small><b id="reportResult">00 / 00</b></div>
+    <div class="reportHeaderGrid"><div class="reportField"><small>核對料號／應核對</small><b id="reportBomResult"></b></div><div class="reportField"><small>待查驗</small><b id="reportPending"></b></div></div><div><label>核對品名</label><div id="reportQualifiedNames" class="reportNameList"></div></div>
+    <div class="btns"><button class="primary" id="reportCloseBtn">完成</button><button class="ghost" id="reportBackBtn">返回修改班別</button></div>
+  </div>
+</div></div>
+<script>
+
+(function(global){
+  const modules={"QRMode": function(module,exports,require){
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+},
+"QRErrorCorrectLevel": function(module,exports,require){
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+
+},
+"QRMaskPattern": function(module,exports,require){
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+},
+"QRMath": function(module,exports,require){
+var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;
+
+},
+"QRPolynomial": function(module,exports,require){
+var QRMath = require('./QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+	
+		// recursive call
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;
+
+},
+"QRRSBlock": function(module,exports,require){
+var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+	// L
+	// M
+	// Q
+	// H
+
+	// 1
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	
+	// 2
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	// 3
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	// 4		
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	
+	// 5
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	
+	// 6
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	
+	// 7		
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	
+	// 8
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	
+	// 9
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	
+	// 10		
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	// 11
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	// 12
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	// 13
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	// 14
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	// 15
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	// 16
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	// 17
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	// 18
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	// 19
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	// 20
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	// 21
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	// 22
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	// 23
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	// 24
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	// 25
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	// 26
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	// 27
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	// 28
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	// 29
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	// 30
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	// 31
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	// 32
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	// 33
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	// 34
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	// 35
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	// 36
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	// 37
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	// 38
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	// 39
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	// 40
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;
+
+},
+"QRBitBuffer": function(module,exports,require){
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;
+
+},
+"QR8bitByte": function(module,exports,require){
+var QRMode = require('./QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+
+QR8bitByte.prototype = {
+
+	getLength : function() {
+		return this.data.length;
+	},
+	
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			// not JIS ...
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+
+module.exports = QR8bitByte;
+
+},
+"QRUtil": function(module,exports,require){
+var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+            // 1 - 9
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+            // 10 - 26
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+            // 27 - 40
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        // LEVEL1
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+        // LEVEL2
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+        // LEVEL3
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        // LEVEL4
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;
+
+},
+"index": function(module,exports,require){
+//---------------------------------------------------------------------
+// QRCode for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//   http://www.opensource.org/licenses/mit-license.php
+//
+// The word "QR Code" is registered trademark of 
+// DENSO WAVE INCORPORATED
+//   http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+// Modified to work in node for this project (and some refactoring)
+//---------------------------------------------------------------------
+
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+		// Calculate automatically typeNumber if provided is < 1
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+	
+		// vertical		
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+	
+		// horizontal
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+	
+		// fixed module
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	// calc num max data.
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	// end code
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	// padding
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	// padding
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;
+
+}};
+  const cache={};
+  function req(id){
+    id=id.replace(/^\.\//,'');
+    if(cache[id]) return cache[id].exports;
+    if(!modules[id]) throw new Error('QR module not found: '+id);
+    const module={exports:{}}; cache[id]=module;
+    modules[id](module,module.exports,req); return module.exports;
+  }
+  global.LocalQRCode=req('index');
+  global.LocalQRErrorCorrectLevel=req('QRErrorCorrectLevel');
+})(window);
+
+</script>
+<script>
+/*
+ * iOS uses the bundled WKWebView bridge for on-device barcode and OCR requests.
+ */
+const IOS_MES=window.MESIOS;
+const HAS_NATIVE_MES = Boolean(IOS_MES);
+const _mesNativeRequests = new Map();
+let _mesNextNativeRequest = 1;
+window.__mesNativeResolve = function(id, value, error) {
+  const pending = _mesNativeRequests.get(id);
+  if (!pending) return;
+  _mesNativeRequests.delete(id);
+  clearTimeout(pending.timer);
+  error ? pending.reject(new Error(error)) : pending.resolve(value);
+};
+function mesNativeRequest(kind, payload) {
+  return new Promise((resolve, reject) => {
+    if (!HAS_NATIVE_MES) return reject(new Error('iOS 原生功能不可用'));
+    const id = _mesNextNativeRequest++;
+    const timer = kind==='save'?null:setTimeout(() => {
+      _mesNativeRequests.delete(id);
+      reject(new Error('iOS 原生處理逾時，請重試'));
+    }, 60000);
+    _mesNativeRequests.set(id, {resolve, reject, timer});
+    try {
+      if (kind === 'inflate') window.NativeMES.inflate(payload, id);
+      else if(kind==='save')window.NativeMES.saveFile(payload.name,payload.type,payload.base64,id);
+      else window.NativeMES.recognize(payload, kind, id);
+    } catch (error) { clearTimeout(timer); _mesNativeRequests.delete(id); reject(error); }
+  });
+}
+function mesToBase64(bytes) {
+  let str='';
+  for (let i=0; i<bytes.length; i+=0x8000)
+    str+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+  return btoa(str);
+}
+function mesFromBase64(str) {
+  const binary=atob(str), bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return bytes;
+}
+async function mesNativeAnalyze(source, kind) {
+  // Convert file/canvas to a bounded JPEG to avoid large bridge messages.
+  const canvas = (source instanceof HTMLCanvasElement)
+    ? source : await imageFileToCanvasCompat(source, 2400);
+  return mesNativeRequest(kind, canvas.toDataURL('image/jpeg', 0.92));
+}
+window.__mesNativeScanResult = async function(mode, value, error) {
+  if (!value) {
+    if (error && error !== '已取消掃描') {
+      const target = mode === 'QR' ? '#taskQrSupport' : '#cameraSupport';
+      document.querySelector(target).textContent='掃描未完成：'+error;
+    }
+    return;
+  }
+  if (mode === 'QR') await acceptTaskQrValue(value);
+  else await submitCheck(value);
+};
+const $=s=>document.querySelector(s);
+const state={task:null,itemIndex:new Map(),checked:new Set(),history:[],stream:null,scanTimer:null,zxingReader:null,taskQrStream:null,taskQrTimer:null,lastCameraCode:'',lastCameraAt:0,photoBatchBusy:false,writeBusy:false,exportBusy:false,ocrWorker:null,ocrLoading:null,manualReviewId:null};
+const RESUME_KEY='mescheck2:last-task';
+let importBusy=false;
+function reportError(message){
+  const el=$('#appFeedback');
+  el.textContent=message;
+  el.classList.remove('hidden');
+}
+function clearFeedback(){$('#appFeedback').classList.add('hidden')}
+let taskLoading=false;
+function inspectionBusy(){return state.photoBatchBusy||state.writeBusy||state.exportBusy||taskLoading}
+function jumpTo(el){el.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}
+const MATERIAL_1D_FORMATS=['code_128','code_39','ean_13','ean_8','itf','codabar','upc_a','upc_e'];
+function zxing1DFormats(){if(!window.ZXing)return[];const B=ZXing.BarcodeFormat;return [B.CODE_128,B.CODE_39,B.EAN_13,B.EAN_8,B.ITF,B.CODABAR,B.UPC_A,B.UPC_E].filter(x=>x!==undefined)}
+function zxingHints(){if(!window.ZXing)return null;const h=new Map();h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,zxing1DFormats());h.set(ZXing.DecodeHintType.TRY_HARDER,true);return h}
+let importMeta={};
+let importSource='';
+let importedSheet='';
+function pad(n){return String(n).padStart(2,'0')}
+function localDT(d=new Date()){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())}
+function taskStamp(d=new Date()){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function b64urlEncode(str){const bytes=new TextEncoder().encode(str);let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function b64urlDecode(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));return new TextDecoder().decode(bytes)}
+function normHeader(v){return String(v??'').replace(/[\s　:：\/\\_-]/g,'').toLowerCase()}
+function splitLine(ln){return ln.includes('\t')?ln.split('\t'):ln.split(',')}
+function extractMetaFromRows(rows){
+  const meta={};
+  const rules=[
+    ['w',['工單編號','工单编号']],['pc',['投產料號','投产料号']],['pq',['投產數量','投产数量']],
+    ['wd',['工單日期','工单日期']],['bv',['工單bom版本','工单bom版本','bom版本']],['bd',['bom發放日期','bom发放日期']]
+  ];
+  for(const row of rows){
+    const cells=row.map(x=>String(x??'').trim());
+    for(const [key,names] of rules){if(meta[key])continue;
+      for(let i=0;i<cells.length;i++){
+        const raw=cells[i], n=normHeader(raw);
+        for(const name of names){const nn=normHeader(name);if(n===nn || n.startsWith(nn)){
+          let val='';
+          const same=raw.match(/[：:]\s*(.+)$/); if(same&&same[1]) val=same[1].trim();
+          if(!val){for(let j=i+1;j<cells.length;j++){if(cells[j]){val=cells[j];break}}}
+          if(val)meta[key]=val;
+        }}
+      }
+    }
+  }
+  return meta;
+}
+function parseRows(rows){
+  const clean=rows.map(r=>r.map(x=>String(x??'').trim()));
+  let header=-1, map={};
+  for(let r=0;r<clean.length;r++){
+    const n=clean[r].map(normHeader);
+    const material=n.findIndex(x=>x==='料號'||x==='料号'||x==='materialcode');
+    const name=n.findIndex(x=>x==='品名'||x==='物料名稱'||x==='物料名称');
+    if(material>=0 && name>=0){
+      header=r;
+      const aliases={r:['序號','序号'],c:['料號','料号','materialcode'],n:['品名','物料名稱','物料名称'],s:['規格','规格'],m:['typemodel','type/model','型號','型号'],uq:['單位用量','单位用量'],iq:['應發量','应发量','需求量'],u:['發料單位','发料单位','單位','单位']};
+      for(const [k,arr] of Object.entries(aliases)){map[k]=n.findIndex(x=>arr.map(normHeader).includes(x))}
+      break;
+    }
+  }
+  const items=[];
+  if(header>=0){
+    for(let r=header+1;r<clean.length;r++){
+      const row=clean[r]; const get=k=>map[k]>=0?(row[map[k]]??''):''; const c=get('c').trim();
+      if(!c)continue; if(/^料號$|^料号$|^materialcode$/i.test(c))continue;
+      const seq=get('r')||String(items.length+1);
+      items.push({r:seq,c,n:get('n'),s:get('s'),m:get('m'),uq:get('uq'),iq:get('iq'),u:get('u')});
+    }
+  } else {
+    for(const row of clean){let p=row;if(!p.some(Boolean))continue;let seq='',c='',n='',s='',m='',uq='',iq='',u='';
+      if(p.length>=8 && /^\d+$/.test(p[0])){[seq,c,n,s,m,uq,iq,u]=p.slice(0,8)}
+      else if(p.length>=7){[c,n,s,m,uq,iq,u]=p.slice(0,7);seq=String(items.length+1)}
+      else if(p.length>=5){[c,n,s,iq,u]=p.slice(0,5);seq=String(items.length+1)}
+      if(!c || /^materialcode$|^料號$|^料号$/i.test(c))continue;items.push({r:seq||String(items.length+1),c,n,s,m,uq,iq,u});
+    }
+  }
+  const seen=new Set(); return items.filter(x=>{const k=x.c.toUpperCase();if(seen.has(k))return false;seen.add(k);return true});
+}
+function textToRows(text){return text.split(/\r?\n/).filter(x=>x.trim()).map(splitLine)}
+function parseBom(text){return parseRows(textToRows(text))}
+function updateSourceInfo(items,metaOverride=null){
+  const meta=metaOverride||extractMetaFromRows(textToRows($('#bomText').value));
+  importMeta={...importMeta,...meta};
+  const parts=[];
+  if(importSource)parts.push('來源：'+importSource);
+  if(importedSheet)parts.push('工作表：'+importedSheet);
+  if(importMeta.w)parts.push('工單：'+importMeta.w);
+  parts.push('用料：'+items.length+' 筆');
+  $('#sourceInfo').textContent=parts.join('｜');
+  $('#sourceInfo').classList.toggle('hidden',!items.length);
+}
+function formatIssuedQty(v){
+  const raw=String(v??'').trim();
+  // Numeric cells can expose a decimal tail from Excel's binary storage.
+  if(!/^[+-]?\d+\.\d{13,}$/.test(raw))return raw;
+  const n=Number(raw);
+  return Number.isFinite(n)?String(Number(n.toPrecision(15))):raw;
+}
+function renderGeneratedBom(task){
+  $('#genWorkOrder').textContent=task.w||'';
+  $('#generatedBomBody').innerHTML=task.i.map(x=>`<tr><td>${esc(x.r)}</td><td><b>${esc(x.c)}</b></td><td>${esc(x.n)}</td><td>${esc(x.s)}</td><td><b>${esc(formatIssuedQty(x.iq))}</b></td></tr>`).join('');
+}
+function makeTask(){
+  const rows=textToRows($('#bomText').value),items=parseRows(rows),meta={...importMeta,...extractMetaFromRows(rows)};
+  if(!items.length){reportError('找不到可用的 BOM 明細，請確認料號欄位。');jumpTo($('#appFeedback'));return null}
+  const w=(meta.w||('臨時任務-'+taskStamp())).trim();
+  return {v:3,w,pc:meta.pc||'',pq:meta.pq||'',wd:meta.wd||'',bv:meta.bv||'',bd:meta.bd||'',t:localDT(),i:items};
+}
+function compactTask(task){return {v:3,w:task.w,pc:task.pc||'',pq:task.pq||'',t:task.t,i:task.i.map(x=>[x.c,x.iq??'',x.u||''])}}
+function expandTask(t){if(Array.isArray(t.i)&&t.i.length&&Array.isArray(t.i[0]))t.i=t.i.map((a,idx)=>({r:String(idx+1),c:a[0]||'',n:'',s:'',m:'',uq:'',iq:a[1]??'',u:a[2]||''}));return t}
+function taskCode(task){return 'MESCHK2:'+b64urlEncode(JSON.stringify(compactTask(task)))}
+function decodeTask(code){code=code.trim();if(code.includes('#task='))code=code.split('#task=')[1].split('&')[0];if(code.startsWith('MESCHK2:'))code=code.slice(8);return expandTask(JSON.parse(b64urlDecode(code)))}
+function renderQR(text){
+  const box=$('#qrBox');box.innerHTML='';
+  try{
+    const qr=new window.LocalQRCode(-1,window.LocalQRErrorCorrectLevel.L);
+    qr.addData(text);qr.make();
+    const n=qr.getModuleCount(),size=Math.min(560,Math.max(240,n*5)),m=Math.max(2,Math.floor(size/n));
+    const canvas=document.createElement('canvas'),quiet=4;
+    canvas.width=canvas.height=(n+2*quiet)*m;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#000';
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))ctx.fillRect((c+quiet)*m,(r+quiet)*m,m,m);
+    box.appendChild(canvas);
+  }catch(e){box.innerHTML='<div class="badnote">這張工單資料太多，單一 QR 放不下。仍可下載完整任務 JSON；下一版可做多張 QR 分段。<br>'+esc(e.message)+'</div>'}
+}
+let lastBuilt=null,lastCode='';
+function setTaskReady(ready){
+  const lower=$('#buildBtn'),top=$('#modeSwitchBtn');
+  lower.disabled=importBusy||!$('#bomText').value.trim();
+  if(!$('#genPage').classList.contains('hidden')){
+    top.disabled=importBusy||!ready;
+    top.classList.toggle('hidden',!ready);
+    top.classList.toggle('startLocked',!ready);
+    top.classList.toggle('startReady',ready);
+    top.classList.remove('secondary');
+  }
+}
+function invalidateBuiltTask(){lastBuilt=null;lastCode='';setTaskReady(false)}
+function buildTask(){
+  if(importBusy)return null;
+  if(lastBuilt)return lastBuilt;
+  clearFeedback();
+  const task=makeTask();
+  if(!task){setTaskReady(false);return null}
+  lastBuilt=task;lastCode=taskCode(task);
+  $('#taskCode').textContent=lastCode;
+  $('#genCount').textContent=task.i.length+' 種料號';
+  renderGeneratedBom(task);
+  $('#genResult').classList.remove('hidden');
+  renderQR(lastCode);setTaskReady(true);
+  jumpTo($('#genResult'));
+  return task;
+}
+async function startInspection(){if(lastBuilt)try{await loadTask(JSON.parse(JSON.stringify(lastBuilt)))}catch(e){reportError(e.message)}}
+$('#buildBtn').onclick=buildTask;
+$('#bomText').addEventListener('input',()=>{
+  if(importSource.startsWith('Excel')||importSource==='BOM 照片'){
+    importSource='貼上資料';importedSheet='';importMeta={};
+    $('#excelInfo').textContent='已手動編輯，建立任務時會重新解析。';
+  }
+  $('#sourceInfo').classList.add('hidden');
+  $('#genResult').classList.add('hidden');
+  $('#parseInfo').textContent='';
+  clearFeedback();invalidateBuiltTask();
+});
+function clearImport(){
+  $('#bomText').value='';$('#parseInfo').textContent='';$('#sourceInfo').classList.add('hidden');$('#genResult').classList.add('hidden');$('#excelInfo').textContent='支援 .xlsx / .xlsm。會自動尋找含「料號」的 BOM 明細工作表。';$('#excelFile').value='';importMeta={};importSource='';importedSheet='';invalidateBuiltTask();
+}
+$('#clearImportBtn').onclick=clearImport;
+$('#excelPickBtn').onclick=()=>$('#excelFile').click();
+
+function u16(d,o){return d.getUint16(o,true)} function u32(d,o){return d.getUint32(o,true)}
+const XLSX_ENTRY_LIMIT=32*1024*1024, XLSX_TOTAL_LIMIT=64*1024*1024;
+async function inflateRaw(bytes){
+  // Use the native raw DEFLATE decoder for Excel files.
+  if (HAS_NATIVE_MES) return mesFromBase64(await mesNativeRequest('inflate',mesToBase64(bytes)));
+  if(typeof DecompressionStream==='undefined')throw new Error('此瀏覽器不支援 Excel 解壓縮，請改用「貼上資料」');
+  const ds=new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+}
+async function unzipXlsx(buffer){
+  const bytes=new Uint8Array(buffer),dv=new DataView(buffer);let eocd=-1;
+  for(let i=bytes.length-22;i>=Math.max(0,bytes.length-66000);i--){if(u32(dv,i)===0x06054b50&&i+22+u16(dv,i+20)===bytes.length){eocd=i;break}}
+  if(eocd<0)throw new Error('不是有效的 .xlsx / .xlsm 檔案');
+  const total=u16(dv,eocd+10),cdOffset=u32(dv,eocd+16),dec=new TextDecoder('utf-8');let p=cdOffset,expanded=0;const entries=Object.create(null);
+  for(let k=0;k<total;k++){
+    if(p+46>eocd||u32(dv,p)!==0x02014b50)throw new Error('Excel 壓縮目錄不完整');
+    const method=u16(dv,p+10),csize=u32(dv,p+20),usize=u32(dv,p+24),nlen=u16(dv,p+28),elen=u16(dv,p+30),clen=u16(dv,p+32),local=u32(dv,p+42);
+    if(p+46+nlen+elen+clen>eocd)throw new Error('Excel 壓縮目錄不完整');
+    const name=dec.decode(bytes.subarray(p+46,p+46+nlen));
+    p+=46+nlen+elen+clen;
+    if(!name.startsWith('xl/')||!/(?:\.xml|\.rels)$/i.test(name))continue;
+    if(usize>XLSX_ENTRY_LIMIT||expanded+usize>XLSX_TOTAL_LIMIT)throw new Error('Excel 解壓縮資料過大');
+    if(local+30>cdOffset||u32(dv,local)!==0x04034b50)throw new Error('Excel 壓縮項目不完整');
+    const lName=u16(dv,local+26),lExtra=u16(dv,local+28),start=local+30+lName+lExtra;
+    if(start+csize>cdOffset)throw new Error('Excel 壓縮項目不完整');
+    const comp=bytes.subarray(start,start+csize);
+    let data;if(method===0)data=comp;else if(method===8)data=await inflateRaw(comp);else throw new Error('Excel 壓縮格式不支援：'+method);
+    if(data.byteLength!==usize)throw new Error('Excel 解壓縮長度不符');
+    expanded+=data.byteLength;
+    entries[name]=data;
+  }
+  return entries;
+}
+function xmlText(bytes){return new TextDecoder('utf-8').decode(bytes)}
+function cellCol(ref){let n=0;for(const ch of (ref.match(/[A-Z]+/i)?.[0]||'')){n=n*26+(ch.toUpperCase().charCodeAt(0)-64)}return Math.max(0,n-1)}
+function getSharedStrings(entries){const b=entries['xl/sharedStrings.xml'];if(!b)return[];const doc=new DOMParser().parseFromString(xmlText(b),'application/xml');return [...doc.getElementsByTagName('si')].map(si=>[...si.getElementsByTagName('t')].map(t=>t.textContent||'').join(''))}
+function parseSheetXml(bytes,shared){
+  const doc=new DOMParser().parseFromString(xmlText(bytes),'application/xml'),rows=[];
+  for(const r of [...doc.getElementsByTagName('row')]){const arr=[];for(const c of [...r.getElementsByTagName('c')]){const idx=cellCol(c.getAttribute('r')||''),type=c.getAttribute('t')||'';let val='';
+    if(type==='inlineStr')val=[...c.getElementsByTagName('t')].map(x=>x.textContent||'').join('');else{const v=c.getElementsByTagName('v')[0]?.textContent??'';val=type==='s'?(shared[Number(v)]??''):v}arr[idx]=val;
+  }rows.push(arr.map(x=>x??''))}return rows;
+}
+function resolveSheetTargets(entries){
+  const wb=entries['xl/workbook.xml'],rels=entries['xl/_rels/workbook.xml.rels'];if(!wb||!rels)throw new Error('Excel 缺少 workbook 結構');
+  const wdoc=new DOMParser().parseFromString(xmlText(wb),'application/xml'),rdoc=new DOMParser().parseFromString(xmlText(rels),'application/xml'),relMap={};
+  for(const r of [...rdoc.getElementsByTagName('Relationship')])relMap[r.getAttribute('Id')]=r.getAttribute('Target');
+  return [...wdoc.getElementsByTagName('sheet')].map(s=>{const rid=s.getAttribute('r:id')||s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');let target=relMap[rid]||'';target=target.replace(/^\//,'');if(target.startsWith('../'))target=target.replace(/^\.\.\//,'');if(!target.startsWith('xl/'))target='xl/'+target;return {name:s.getAttribute('name')||'工作表',target}});
+}
+function rowsToText(rows){return rows.map(r=>r.map(v=>String(v??'')).join('\t').replace(/\t+$/,'')).join('\n')}
+async function readExcelFile(file){
+  if(!/\.xls[xm]$/i.test(file.name))throw new Error('請選擇 .xlsx 或 .xlsm 檔案');
+  if(file.size>28*1024*1024)throw new Error('Excel 檔案過大（上限 28 MB）');
+  const entries=await unzipXlsx(await file.arrayBuffer()),shared=getSharedStrings(entries),sheets=resolveSheetTargets(entries);let best=null;
+  for(const sh of sheets){const b=entries[sh.target];if(!b)continue;const rows=parseSheetXml(b,shared),items=parseRows(rows);if(items.length){best={sheet:sh.name,rows,items,meta:extractMetaFromRows(rows)};break}}
+  if(!best)throw new Error('找不到含「料號 / 品名」欄位的 BOM 明細工作表');return best;
+}
+$('#excelFile').onchange=async e=>{
+  const f=e.target.files[0];if(!f||importBusy)return;
+  importBusy=true;
+  for(const id of ['#excelPickBtn','#bomPhotoBtn','#clearImportBtn','#bomText'])$(id).disabled=true;
+  clearFeedback();setTaskReady(!!lastBuilt);
+  try{
+    $('#excelInfo').textContent='正在讀取 '+f.name+'…';
+    const x=await readExcelFile(f);invalidateBuiltTask();importMeta=x.meta||{};importSource='Excel：'+f.name;importedSheet=x.sheet;
+    $('#bomText').value=rowsToText(x.rows);$('#excelInfo').textContent=`已讀取：${f.name}｜工作表：${x.sheet}｜${x.items.length} 筆用料`;
+    updateSourceInfo(x.items,x.meta);$('#parseInfo').textContent=`已解析 ${x.items.length} 筆用料，請按「建立任務」。`;$('#genResult').classList.add('hidden');
+  }catch(err){$('#excelInfo').textContent='讀取失敗：'+err.message+'。可改用貼上資料。'}
+  finally{
+    importBusy=false;e.target.value='';
+    for(const id of ['#excelPickBtn','#bomPhotoBtn','#clearImportBtn','#bomText'])$(id).disabled=false;
+    setTaskReady(!!lastBuilt);
+  }
+};
+$('#copyCode').onclick=async()=>{try{await navigator.clipboard.writeText(lastCode);alert('任務碼已複製')}catch{prompt('請複製任務碼',lastCode)}};
+function dl(name,content,type='application/json'){
+  if (HAS_NATIVE_MES) {
+    const data=new TextEncoder().encode(content);
+    if(data.length>28*1024*1024)throw new Error('匯出檔案超過 28 MiB。');
+    return mesNativeRequest('save',{name,type:type.split(';')[0],base64:mesToBase64(data)});
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  return Promise.resolve('saved');
+}
+$('#downloadTask').onclick=async()=>{
+  if(!lastBuilt||inspectionBusy())return;
+  const feedback=$('#taskExportFeedback'),button=$('#downloadTask'),task=lastBuilt;
+  state.exportBusy=true;button.disabled=true;feedback.textContent='正在儲存任務…';
+  try{feedback.textContent=await dl('MES巡檢任務_'+task.w+'.json',JSON.stringify(task,null,2))==='saved'?'任務 JSON 已儲存至「檔案」的 MES 匯出資料夾。':'已取消儲存。'}
+  catch(e){feedback.textContent=e.message}
+  finally{button.disabled=false;state.exportBusy=false}
+};
+$('#loadIntoScan').onclick=startInspection;
+function showTab(which){
+  const gen=which==='gen',top=$('#modeSwitchBtn');
+  $('#genPage').classList.toggle('hidden',!gen);
+  $('#scanPage').classList.toggle('hidden',gen);
+  $('#workflowTitle').textContent=gen?'巡檢任務':state.task?'工單巡檢':'載入巡檢任務';
+  if(gen){top.textContent='開始巡檢';setTaskReady(!!lastBuilt);updateResumeButton()}
+  else{
+    top.textContent='返回首頁';
+    top.disabled=false;
+    top.classList.remove('hidden','startLocked','startReady');
+    top.classList.add('secondary');
+  }
+  window.scrollTo(0,0);
+}
+$('#modeSwitchBtn').onclick=()=>{
+  if(inspectionBusy())return reportError('作業仍在進行，請稍候。');
+  if($('#genPage').classList.contains('hidden')){clearFeedback();showTab('gen')}else startInspection();
+};
+$('#openTaskLoadBtn').onclick=()=>{$('#switchTaskBtn').click();if(!inspectionBusy())showTab('scan')};
+$('#resumeTaskBtn').onclick=async()=>{try{const task=readResumeTask();if(task)await loadTask(task)}catch(e){reportError(e.message)}};
+let resumeTask=null;
+function readResumeTask(){return resumeTask}
+function updateResumeButton(){
+  const task=readResumeTask(),button=$('#resumeTaskBtn');
+  button.classList.toggle('hidden',!task?.w);
+  button.textContent=task?.w?'接續 '+task.w:'';
+}
+function storageKey(task=state.task){return task?'mescheck2:'+task.w+':'+task.t:''}
+async function saveProgress(checked,history){
+  try{await IOS_MES.put('progress',storageKey(),JSON.stringify({checked:[...checked],history}))}
+  catch{throw new Error('巡檢紀錄未能儲存，請檢查裝置空間後重試。')}
+  state.checked=checked;state.history=history;
+}
+async function loadProgress(task){
+  try{
+    const saved=JSON.parse(await IOS_MES.get('progress',storageKey(task))||'null');
+    return {checked:new Set(saved?.checked||[]),history:saved?.history||[]};
+  }catch{throw new Error('這份工單的本機紀錄無法讀取。原有紀錄仍保留。')}
+}
+function putPhoto(id,data){return IOS_MES.put('photos',id,data)}
+function getPhoto(id){return IOS_MES.get('photos',id)}
+function historyPhotoIds(h){return [h.photoId,...(h.previousPhotoIds||[])].filter(Boolean)}
+async function deletePhotos(ids){if(ids.length)await IOS_MES.removePhotos(ids)}
+async function loadTask(input){
+  if(inspectionBusy())throw new Error('作業仍在進行，請稍候。');
+  taskLoading=true;
+  try{await loadTaskInternal(input)}
+  finally{taskLoading=false}
+}
+async function loadTaskInternal(input){
+  if(!input||typeof input.w!=='string'||!input.w.trim()||!Array.isArray(input.i)||!input.i.length)throw new Error('任務必須含工單號碼及至少一筆料號。');
+  if(input.t!=null&&typeof input.t!=='string')throw new Error('任務時間格式不正確。');
+  const expand=expandTask({...input,i:[...input.i]});
+  const items=new Map();
+  const normalized=expand.i.map((x,idx)=>{
+    if(!x||typeof x!=='object'||typeof x.c!=='string')throw new Error('第 '+(idx+1)+' 筆料號格式不正確。');
+    const c=x.c.trim(),key=materialKey(c);
+    if(!key)throw new Error('第 '+(idx+1)+' 筆料號為空白。');
+    if(items.has(key))throw new Error('任務含有重複料號：'+c);
+    const item={r:x.r||String(idx+1),c,n:String(x.n||''),s:String(x.s||''),m:String(x.m||''),uq:x.uq??'',iq:x.iq??x.q??'',u:String(x.u||'')};
+    items.set(key,item);
+    return item;
+  });
+  let t={...expand,w:input.w.trim(),i:normalized};
+  const resume=readResumeTask();
+  // A compact QR for the same task preserves details already loaded from its full JSON.
+  if(resume&&storageKey(resume)===storageKey(t)&&t.i.every(row=>!row.n&&!row.s&&!row.m)&&resume.i?.length===t.i.length&&
+      resume.i.every((row,idx)=>row.c===t.i[idx].c&&String(row.iq)===String(t.i[idx].iq)&&row.u===t.i[idx].u)){
+    t={...resume,i:t.i.map((row,idx)=>({...row,n:resume.i[idx].n,s:resume.i[idx].s,m:resume.i[idx].m,uq:resume.i[idx].uq}))};
+    t.i.forEach(row=>items.set(materialKey(row.c),row));
+  }
+  const progress=await loadProgress(t);
+  let resumeError=false;
+  try{
+    await IOS_MES.put('progress',RESUME_KEY,JSON.stringify(t));
+    resumeTask=t;
+  }catch{resumeError=true}
+  clearFeedback();stopTaskQrCamera();stopCamera();
+  state.task=t;state.itemIndex=items;
+  state.checked=new Set([...progress.checked].map(materialKey).filter(key=>items.has(key)));
+  state.history=progress.history;
+  state.lastCameraCode='';state.lastCameraAt=0;
+  state.manualReviewId=null;
+  photoLimit=18;
+  $('#abnormalDetails').classList.add('hidden');
+  $('#photoShelf').open=false;
+  $('#loadCard').classList.add('hidden');$('#activeTask').classList.remove('hidden');
+  $('#scanWO').textContent=t.w;$('#scanProd').textContent=t.pc||'—';$('#scanTime').textContent=t.t||'—';
+  const legacyPhotos=state.history.some(h=>h.source==='PHOTO'&&!h.verification&&['PHOTO_OK','PHOTO_ADD'].includes(h.status));
+  $('#legacyPhotoNotice').classList.toggle('hidden',!legacyPhotos);
+  renderTask();
+  setHero('idle','等待核對','','掃條碼，或拍照辨識料號。');
+  showTab('scan');
+  if(resumeError)reportError('無法保存接續入口。請保留同一份任務 QR 或 JSON。');
+}
+function statusText(h){const m={OK:'🟢 掃碼正確',DUP:'🟡 重複掃描',BAD:'🔴 錯料',PHOTO_OK:'📷 照片核對',PHOTO_ADD:'📷 補照片',PHOTO_BAD:'🔴 照片核對不符',PHOTO_UNREADABLE:'🟠 無法辨識',MANUAL_OK:'✅ 人工查驗合格'};let base=m[h.status]||h.status;if(h.detectMethod)base+='（'+h.detectMethod+'）';if(h.resolved)base+='｜已'+(h.resolution||'處理');return base}
+let photoLimit=18;
+async function renderPhotos(){
+  const hs=state.history.filter(h=>h.photoId);
+  $('#photoN').textContent=hs.length;$('#photoBadge').textContent=hs.length+' 張';
+  const grid=$('#photoGrid');
+  if(!$('#photoShelf').open){grid.replaceChildren();return}
+  $('#morePhotosBtn').classList.toggle('hidden',hs.length<=photoLimit);
+  grid.innerHTML=hs.length?hs.slice(-photoLimit).reverse().map(h=>`<div class="photoCard" data-pid="${esc(h.photoId)}"><img loading="lazy" alt="巡檢照片"><div class="photoMeta"><b>${esc(h.code||'未辨識')}</b>${esc(statusText(h))}<br>${esc(h.time)}</div></div>`).join(''):'<div class="footerNote">尚未保存照片。</div>';
+  for(const card of grid.querySelectorAll('[data-pid]')){
+    if(!card.isConnected)break;
+    try{const photo=await getPhoto(card.dataset.pid);if(photo)card.querySelector('img').src=photo}catch{}
+  }
+}
+$('#photoShelf').addEventListener('toggle',renderPhotos);
+$('#morePhotosBtn').onclick=()=>{photoLimit+=18;renderPhotos()};
+function failedHistory(){return state.history.filter(h=>!h.resolved&&(h.status==='BAD'||h.status==='PHOTO_BAD'||h.status==='PHOTO_UNREADABLE'))}
+function qualifiedItems(){if(!state.task)return[];return state.task.i.filter(x=>state.checked.has(materialKey(x.c)))}
+async function renderOutcome(){
+  if(!state.task)return;
+  const okItems=qualifiedItems(),bad=failedHistory(),total=state.task.i.length,done=okItems.length,complete=total>0&&done>=total;
+  $('#qualifiedCount').textContent=okItems.length+' 項';
+  $('#qualifiedResults').innerHTML=okItems.length?okItems.map(x=>`<div class="outcomeRow"><b>${esc(x.c)}</b>${esc(x.n||'')}${x.iq!==''?`<br>應發量：${esc(formatIssuedQty(x.iq))}`:''}</div>`).join(''):'<div class="footerNote">尚無合格資料。</div>';
+  $('#abnormalCount').textContent=bad.length+' 筆';
+  $('#abnormalResults').textContent=bad.length?`共有 ${bad.length} 筆核對失敗紀錄，點下方按鈕查看全部內容。`:'目前無異常紀錄。';
+  const toggle=$('#abnormalToggle'),completionToggle=$('#completionAbnormalToggle'),manualBtn=$('#manualReviewBtn');
+  toggle.disabled=!bad.length;toggle.textContent=bad.length?`查看異常資料（${bad.length}）`:'無異常資料';
+  completionToggle.disabled=!bad.length;completionToggle.textContent=`異常 ${bad.length} 筆`;
+  manualBtn.disabled=!bad.length;manualBtn.textContent=bad.length?`人工查驗判定（${bad.length}）`:'人工查驗判定';
+  $('#quickReviewBtn').classList.toggle('hidden',!bad.length);
+  $('#quickReviewBtn').textContent=`待人工查驗 ${bad.length} 筆`;
+  $('#completionQualifiedBtn').textContent=`合格 ${okItems.length} 項`;
+  const details=$('#abnormalDetails');
+  if(!bad.length){details.classList.add('hidden');details.innerHTML=''}else if(!details.classList.contains('hidden')){
+    details.innerHTML=`<div class="tablewrap"><table><thead><tr><th>時間</th><th>方式</th><th>料號</th><th>結果</th><th>照片</th></tr></thead><tbody>${bad.slice().reverse().map(h=>`<tr><td>${esc(h.time)}</td><td>${h.source==='PHOTO'?'📷 '+esc(h.detectMethod||'照片'):'▣ 掃碼'}</td><td><b>${esc(h.code)}</b></td><td>${esc(statusText(h))}</td><td>${h.photoId?`<img class="abnormalPhoto" data-abpid="${esc(h.photoId)}" alt="異常照片">`:'—'}</td></tr>`).join('')}</tbody></table></div>`;
+    for(const img of details.querySelectorAll('[data-abpid]')){if(!img.isConnected)break;try{img.src=await getPhoto(img.dataset.abpid)}catch{}}
+  }
+  const completion=$('#completionResult');
+  if(complete){
+    const legacy=!$('#legacyPhotoNotice').classList.contains('hidden'),caution=bad.length||legacy;
+    completion.classList.remove('hidden');
+    const banner=$('#completionBanner');
+    banner.classList.toggle('ok',!caution);banner.classList.toggle('warn',!!caution);
+    $('#completionTitle').textContent=bad.length?'核對完成｜有異常紀錄':legacy?'料號已核對｜含舊版判定':'核對完成｜全部合格';
+    $('#completionCounts').textContent=`核對 ${okItems.length} 項｜異常 ${bad.length} 筆`;
+  }
+  else{completion.classList.add('hidden')}
+}
+function toggleAbnormalDetails(){
+  const details=$('#abnormalDetails');if($('#abnormalToggle').disabled)return;
+  const hidden=details.classList.toggle('hidden');
+  $('#abnormalToggle').setAttribute('aria-expanded',String(!hidden));
+  if(!hidden){renderOutcome();jumpTo(details)}else details.replaceChildren();
+}
+$('#abnormalToggle').onclick=toggleAbnormalDetails;
+$('#completionAbnormalToggle').onclick=()=>{if($('#abnormalDetails').classList.contains('hidden'))toggleAbnormalDetails();else jumpTo($('#abnormalDetails'))};
+$('#completionQualifiedBtn').onclick=()=>jumpTo($('#qualifiedResults'));
+$('#manualReviewBtn').onclick=()=>openManualReview();
+$('#quickReviewBtn').onclick=()=>openManualReview();
+function renderTask(){
+  if(!state.task)return;
+  const total=state.task.i.length,done=state.checked.size;
+  $('#totalN').textContent=total;$('#doneN').textContent=done;$('#leftN').textContent=total-done;
+  $('#progressBadge').textContent=done+' / '+total;
+  const percent=Math.round(done/total*100);
+  $('#workProgress').setAttribute('aria-valuenow',percent);
+  $('#workProgress .progressBar').style.width=percent+'%';
+  $('#itemList').innerHTML=state.task.i.map(x=>{
+    const checked=state.checked.has(materialKey(x.c));
+    return `<div class="item ${checked?'done':''}"><div class="dot" role="img" aria-label="${checked?'已核對':'未核對'}"></div><div><div class="mc">${esc(x.c)}</div><small>${esc(x.n)}${x.s?'｜'+esc(x.s):''}${x.m?'｜'+esc(x.m):''}</small></div><div class="qty">${x.iq!==''?esc(formatIssuedQty(x.iq))+' '+esc(x.u):''}</div></div>`;
+  }).join('');
+  renderOutcome();renderPhotos();
+}
+function beep(kind){try{const A=window.AudioContext||window.webkitAudioContext,ctx=new A(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=kind==='bad'?180:kind==='warn'?440:760;g.gain.value=.05;o.start();o.stop(ctx.currentTime+(kind==='bad'?.24:.09))}catch{}if(navigator.vibrate)navigator.vibrate(kind==='bad'?[120,60,120]:kind==='warn'?[80,40,80]:60)}
+function setHero(kind,title,code,desc){const h=$('#scanHero');h.className='scanHero'+(kind==='ok'?' ok':kind==='warn'?' warn':kind==='bad'?' bad':kind==='info'?' info':'');h.querySelector('h2').textContent=title;h.querySelector('.code').textContent=code||'';h.querySelector('.desc').textContent=desc||''}
+function normalizeCode(v){return String(v??'').trim().replace(/^\]C1/i,'').trim()}
+function materialKey(v){return normalizeCode(v).toUpperCase()}
+function findItem(code){return state.itemIndex.get(materialKey(code))}
+function newHistoryEntry(fields){return {id:'h'+Date.now()+Math.random().toString(16).slice(2),time:localDT(),...fields}}
+async function commitPhotoProgress(checked,history,h,photoData){
+  if(photoData){
+    const photoId=storageKey()+':'+h.id+':'+Date.now();
+    try{await putPhoto(photoId,photoData);h.photoId=photoId}
+    catch{throw new Error('照片未能儲存，請檢查裝置空間後重試。')}
+  }
+  try{await saveProgress(checked,history)}
+  catch(error){
+    if(photoData&&h.photoId)await deletePhotos([h.photoId]).catch(()=>{});
+    throw error;
+  }
+  if(!state.photoBatchBusy)renderTask();
+}
+async function checkCode(raw,opt={}){
+  if(!state.task)return null;
+  const input=normalizeCode(raw);
+  if(!input)return null;
+  const source=opt.source||'SCAN',item=findItem(input),code=item?.c||input,key=materialKey(code);
+  const checked=new Set(state.checked),existed=checked.has(key);
+  const status=item?(source==='PHOTO'?(existed?'PHOTO_ADD':'PHOTO_OK'):(existed?'DUP':'OK')):(source==='PHOTO'?'PHOTO_BAD':'BAD');
+  if(item)checked.add(key);
+  const h=newHistoryEntry({code,status,name:item?.n||'',source,detectMethod:opt.detectMethod||'',
+    rawDetected:opt.rawDetected||'',ocrText:opt.ocrText||'',verification:2});
+  await commitPhotoProgress(checked,[...(opt.history||state.history),h],h,opt.photoData);
+  if(!state.photoBatchBusy){
+    const tone=item?(status==='DUP'?'warn':'ok'):'bad';
+    const title={OK:'正確用料',DUP:'已核對過',PHOTO_OK:'照片核對完成',PHOTO_ADD:'照片已補存',PHOTO_BAD:'照片與 BOM 不符',BAD:'非本工單用料'};
+    setHero(tone,title[status],code,item?.n||(item?'工單有此料號':'工單 BOM 找不到此料號'));
+    beep(tone);
+  }
+  return h;
+}
+async function submitCheck(value,fromInput=false){
+  if(inspectionBusy())return;
+  state.writeBusy=true;
+  try{
+    const result=await checkCode(value);
+    if(result&&fromInput){$('#manualCode').value='';$('#manualCode').focus({preventScroll:true})}
+  }catch(e){setHero('bad','核對未儲存','',e.message)}
+  finally{state.writeBusy=false}
+}
+$('#checkBtn').onclick=()=>submitCheck($('#manualCode').value,true);
+$('#manualCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitCheck(e.target.value,true)}});
+function taskFromScannedValue(raw){
+  const v=String(raw||'').trim();
+  if(!v)throw new Error('沒有讀到任務內容');
+  const m=v.match(/(?:#|[?&])task=([^&]+)/);
+  if(m){try{return expandTask(JSON.parse(b64urlDecode(decodeURIComponent(m[1]))))}catch(e){throw new Error('QR 內的任務資料格式錯誤')}}
+  return decodeTask(v)
+}
+function stopTaskQrCamera(){if(state.taskQrTimer)clearInterval(state.taskQrTimer);state.taskQrTimer=null;if(state.taskQrStream)state.taskQrStream.getTracks().forEach(t=>t.stop());state.taskQrStream=null;$('#taskQrVideoWrap').classList.add('hidden')}
+async function acceptTaskQrValue(raw){try{const t=taskFromScannedValue(raw);stopTaskQrCamera();await loadTask(t);$('#taskQrSupport').textContent='✓ 任務 QR 載入成功，已進入巡檢畫面。'}catch(e){$('#taskQrSupport').textContent='任務 QR 無法載入：'+e.message}}
+async function imageFileToCanvasCompat(file,maxDim=2200){
+  if(!file)throw new Error('沒有選擇圖片');
+  if('createImageBitmap' in window){
+    const bmp=await createImageBitmap(file),scale=Math.min(1,maxDim/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(bmp.width*scale));c.height=Math.max(1,Math.round(bmp.height*scale));c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();return c;
+  }
+  const url=URL.createObjectURL(file);
+  try{return await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,maxDim/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c)};img.onerror=()=>reject(new Error('照片無法開啟'));img.src=url})}finally{URL.revokeObjectURL(url)}
+}
+async function decodeTaskQrImage(file){
+  if (HAS_NATIVE_MES) {
+    const canvas=await imageFileToCanvasCompat(file,2200);
+    let result=await mesNativeAnalyze(canvas,'qr');
+    if(!result){
+      // QR images saved from the original HTML can lack the quiet zone.
+      const margin=Math.ceil(Math.max(canvas.width,canvas.height)*.09);
+      const padded=document.createElement('canvas');
+      padded.width=canvas.width+2*margin;
+      padded.height=canvas.height+2*margin;
+      const ctx=padded.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,padded.width,padded.height);
+      ctx.drawImage(canvas,margin,margin);
+      result=await mesNativeAnalyze(padded,'qr');
+    }
+    if(result)return result;
+    throw new Error('照片中沒有辨識到任務 QR，請靠近一點並對準標籤');
+  }
+  // 優先用瀏覽器原生 BarcodeDetector；沒有時改用 jsQR，不再直接判定「不支援」。
+  if('BarcodeDetector' in window){
+    try{const fmts=await BarcodeDetector.getSupportedFormats();if(fmts.includes('qr_code')){const bmp=await createImageBitmap(file),rs=await new BarcodeDetector({formats:['qr_code']}).detect(bmp);if(bmp.close)bmp.close();if(rs.length&&rs[0].rawValue)return rs[0].rawValue}}catch{}
+  }
+  if(typeof window.jsQR!=='function')throw new Error('QR 辨識元件尚未載入，請確認手機可連外網後再試一次');
+  const c=await imageFileToCanvasCompat(file,2400),ctx=c.getContext('2d',{willReadFrequently:true}),im=ctx.getImageData(0,0,c.width,c.height);
+  let q=window.jsQR(im.data,c.width,c.height,{inversionAttempts:'attemptBoth'});
+  if(q?.data)return q.data;
+  // 遠距離拍攝時再嘗試中央裁切，減少背景干擾。
+  const side=Math.min(c.width,c.height),sx=Math.max(0,Math.floor((c.width-side)/2)),sy=Math.max(0,Math.floor((c.height-side)/2)),cc=document.createElement('canvas');cc.width=cc.height=side;cc.getContext('2d').drawImage(c,sx,sy,side,side,0,0,side,side);const cim=cc.getContext('2d',{willReadFrequently:true}).getImageData(0,0,side,side);q=window.jsQR(cim.data,side,side,{inversionAttempts:'attemptBoth'});
+  if(q?.data)return q.data;
+  throw new Error('照片中沒有辨識到任務 QR，請靠近一點並讓 QR 佔畫面較大範圍');
+}
+async function startTaskQrCamera(){
+  if(inspectionBusy())return;
+  if(HAS_NATIVE_MES){window.NativeMES.scan('QR');return}
+  const nativeOk=('BarcodeDetector' in window)&&navigator.mediaDevices?.getUserMedia;
+  if(!nativeOk){
+    $('#taskQrSupport').textContent='此手機改用「拍照掃描」模式：拍下任務 QR 後會自動辨識。';
+    $('#taskQrCameraInput').click();
+    return;
+  }
+  try{
+    stopTaskQrCamera();
+    const formats=await BarcodeDetector.getSupportedFormats();
+    if(!formats.includes('qr_code')){ $('#taskQrSupport').textContent='此手機改用「拍照掃描」模式：拍下任務 QR 後會自動辨識。';$('#taskQrCameraInput').click();return }
+    state.taskQrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    const v=$('#taskQrVideo');v.srcObject=state.taskQrStream;await v.play();$('#taskQrVideoWrap').classList.remove('hidden');
+    const detector=new BarcodeDetector({formats:['qr_code']});
+    $('#taskQrSupport').textContent='請把「任務 QR」放進白色框內。';
+    state.taskQrTimer=setInterval(async()=>{if(v.readyState<2)return;try{const rs=await detector.detect(v);if(rs.length&&rs[0].rawValue){await acceptTaskQrValue(rs[0].rawValue)}}catch{}},220)
+  }catch(e){
+    stopTaskQrCamera();
+    $('#taskQrSupport').textContent='即時相機無法使用，已切換成拍照掃描。';
+    $('#taskQrCameraInput').click();
+  }
+}
+async function readTaskQrImage(file){
+  if(!file)return;
+  try{
+    $('#taskQrSupport').textContent='正在辨識工單任務 QR…';
+    const raw=await decodeTaskQrImage(file);
+    await acceptTaskQrValue(raw);
+  }catch(e){$('#taskQrSupport').textContent='無法載入工單 QR：'+e.message}
+}
+$('#taskQrCameraBtn').onclick=startTaskQrCamera;
+$('#taskQrImageBtn').onclick=()=>$('#taskQrImageInput').click();
+$('#taskQrCameraInput').onchange=async e=>{const f=e.target.files?.[0];try{await readTaskQrImage(f)}finally{e.target.value=''}};
+$('#taskQrImageInput').onchange=async e=>{const f=e.target.files?.[0];try{await readTaskQrImage(f)}finally{e.target.value=''}};
+$('#switchTaskBtn').onclick=()=>{
+  if(inspectionBusy())return reportError('作業仍在進行，請稍候。');
+  clearFeedback();stopCamera();stopTaskQrCamera();state.task=null;state.itemIndex.clear();
+  state.checked=new Set();state.history=[];
+  $('#activeTask').classList.add('hidden');$('#loadCard').classList.remove('hidden');
+  $('#importCode').value='';$('#taskQrSupport').textContent='';
+  showTab('scan');
+};
+$('#importTaskBtn').onclick=async()=>{try{await loadTask(decodeTask($('#importCode').value))}catch(e){$('#taskQrSupport').textContent='任務碼無法讀取：'+e.message}};
+$('#importTaskFileBtn').onclick=()=>$('#taskFile').click();
+$('#taskFile').onchange=async e=>{
+  try{
+    const f=e.target.files[0];if(!f)return;
+    if(f.size>8*1024*1024)throw new Error('任務 JSON 超過 8 MiB。');
+    await loadTask(JSON.parse(await f.text()));
+  }catch(err){$('#taskQrSupport').textContent='任務檔無法讀取：'+err.message}
+  finally{e.target.value=''}
+};
+$('#resetProgress').onclick=async()=>{
+  if(!state.task||inspectionBusy())return;
+  if(!confirm('確定清除工單 '+state.task.w+' 的巡檢進度與照片？'))return;
+  state.writeBusy=true;
+  try{
+    const ids=state.history.flatMap(historyPhotoIds);
+    await saveProgress(new Set(),[]);
+    $('#legacyPhotoNotice').classList.add('hidden');
+    renderTask();setHero('idle','已清除巡檢進度','','可重新開始核對。');
+    try{await deletePhotos(ids)}catch{reportError('進度已清除，部分本機照片無法清理。')}
+  }catch(e){reportError(e.message)}
+  finally{state.writeBusy=false}
+};
+
+function reportDateText(d=new Date()){return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())}
+function reportCountText(done,total){return String(done).padStart(2,'0')+' / '+String(total).padStart(2,'0')}
+function photoReportCounts(history=state.history){
+  const photos=(history||[]).filter(h=>h?.source==='PHOTO'||h?.photoId);
+  const qualified=photos.filter(h=>h.photoId&&(h.status==='PHOTO_OK'||h.status==='PHOTO_ADD'||
+    ((h.status==='PHOTO_BAD'||h.status==='PHOTO_UNREADABLE')&&h.resolved&&h.resolution==='人工判定合格'))).length;
+  return {qualified,total:photos.reduce((sum,h)=>sum+1+(h.previousPhotoIds?.length||0),0)};
+}
+function openCheckReport(){
+  if(!state.task||inspectionBusy())return;
+  $('#reportConfirmWorkOrder').textContent=state.task.w||'—';
+  $('#reportShiftSelect').value='';
+  $('#reportConfirmBtn').disabled=true;
+  $('#checkReportSetup').classList.remove('hidden');
+  $('#checkReportView').classList.add('hidden');
+  openModal('checkReportModal',$('#checkReportBtn'));
+}
+function renderCheckReport(){
+  const shift=$('#reportShiftSelect').value;
+  if(!shift||!state.task)return;
+  const okItems=qualifiedItems();
+  const photoCounts=photoReportCounts();
+  $('#reportDate').textContent=reportDateText();
+  $('#reportShift').textContent=shift;
+  $('#reportWorkOrder').textContent=state.task.w||'—';
+  $('#reportResult').textContent=reportCountText(photoCounts.qualified,photoCounts.total);
+  $('#reportBomResult').textContent=okItems.length+' / '+state.task.i.length;
+  $('#reportPending').textContent=failedHistory().length+' 筆';
+  $('#reportQualifiedNames').innerHTML=okItems.length?okItems.map(x=>`<div class="reportNameItem"><b>${esc(x.n||'未提供品名')}</b><span>${esc(x.c)}</span></div>`).join(''):'<div class="reportEmpty">目前沒有已核對合格的品名。</div>';
+  $('#checkReportSetup').classList.add('hidden');
+  $('#checkReportView').classList.remove('hidden');
+  $('#reportCloseBtn').focus({preventScroll:true});
+}
+$('#checkReportBtn').onclick=openCheckReport;
+$('#reportShiftSelect').onchange=()=>{$('#reportConfirmBtn').disabled=!$('#reportShiftSelect').value};
+$('#reportConfirmBtn').onclick=renderCheckReport;
+$('#reportCancelBtn').onclick=()=>closeModal('checkReportModal');
+$('#reportCloseBtn').onclick=()=>closeModal('checkReportModal');
+$('#reportBackBtn').onclick=()=>{$('#checkReportView').classList.add('hidden');$('#checkReportSetup').classList.remove('hidden');$('#reportShiftSelect').focus()};
+async function exportReport(){
+  if(!state.task||inspectionBusy())return;
+  const task=state.task,history=state.history,checked=state.checked;
+  const feedback=$('#exportFeedback'),button=$('#exportReport');
+  state.exportBusy=true;button.disabled=true;feedback.textContent='正在整理報告…';
+  try{
+    const ids=[...new Set(history.flatMap(historyPhotoIds))],photos=new Map();
+    let imageBytes=0,missing=0;
+    for(const id of ids){
+      const photo=await getPhoto(id).catch(()=>'');
+      if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(photo)){missing++;continue}
+      imageBytes+=photo.length;
+      if(imageBytes>28*1024*1024)throw new Error('報告內嵌照片已超過 28 MiB。');
+      photos.set(id,photo);
+    }
+    const rows=task.i.map(x=>`<tr><td>${esc(x.r)}</td><td><b>${esc(x.c)}</b></td><td>${esc(x.n)}</td><td>${esc(x.s)}</td><td>${esc(formatIssuedQty(x.iq))} ${esc(x.u)}</td><td>${checked.has(materialKey(x.c))?'完成':'未完成'}</td></tr>`).join('');
+    const events=history.map(h=>{
+      const method=h.source==='REVIEW'?'人工查驗':h.source==='PHOTO'?'照片'+(h.detectMethod?'／'+h.detectMethod:''):'掃碼';
+      const evidence=historyPhotoIds(h).map(id=>photos.has(id)?`<img src="${photos.get(id)}" alt="巡檢照片">`:'<p>照片無法讀取</p>').join('');
+      return `<tr><td>${esc(h.time)}</td><td>${esc(method)}</td><td>${esc(h.code)}</td><td>${esc(statusText(h))}${h.resolvedCode?`<br>判定料號：${esc(h.resolvedCode)}`:''}${h.error?`<br>${esc(h.error)}`:''}</td><td>${evidence}</td></tr>`;
+    }).join('');
+    const counts=photoReportCounts(history),pending=failedHistory().length;
+    const report=`<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>巡檢報告 ${esc(task.w)}</title><style>body{font-family:system-ui,sans-serif;color:#152e26;margin:24px}h1{margin:0 0 8px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cddbd2;padding:8px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#edf5ef}img{display:block;max-width:220px;max-height:170px;margin-bottom:4px}.table{overflow:auto}</style><body><h1>MES 工單巡檢報告</h1><p>工單 <b>${esc(task.w)}</b><br>投產料號 ${esc(task.pc||'—')}　投產數量 ${esc(task.pq||'—')}<br>任務時間 ${esc(task.t||'—')}<br>匯出時間 ${esc(localDT())}</p><p>料號核對 ${checked.size} / ${task.i.length}　照片合格 ${counts.qualified} / ${counts.total}　待查驗 ${pending} 筆</p>${missing?`<p>有 ${missing} 張照片無法讀取。</p>`:''}<h2>BOM 核對狀態</h2><div class="table"><table><thead><tr><th>序號</th><th>料號</th><th>品名</th><th>規格</th><th>應發量</th><th>核對</th></tr></thead><tbody>${rows}</tbody></table></div><h2>巡檢紀錄</h2><div class="table"><table><thead><tr><th>時間</th><th>來源</th><th>料號</th><th>結果</th><th>證據照片</th></tr></thead><tbody>${events}</tbody></table></div></body></html>`;
+    feedback.textContent='請選擇儲存位置，並等候寫入完成。';
+    const saved=await dl('MES巡檢完整報告_'+task.w+'.html',report,'text/html;charset=utf-8');
+    feedback.textContent=saved==='saved'?(missing?`報告已儲存，有 ${missing} 張照片無法讀取。`:'報告已儲存至「檔案」的 MES 匯出資料夾。'):'已取消儲存。';
+  }catch(e){feedback.textContent=e.message}
+  finally{button.disabled=false;state.exportBusy=false}
+}
+$('#exportReport').onclick=exportReport;
+async function native1DFormats(){if(!('BarcodeDetector' in window))return[];try{const fmts=await BarcodeDetector.getSupportedFormats();return MATERIAL_1D_FORMATS.filter(x=>fmts.includes(x))}catch{return[]}}
+async function cameraSupported(){if(HAS_NATIVE_MES)return true;if(!navigator.mediaDevices?.getUserMedia)return false;const native=await native1DFormats();return native.length>0||!!(window.ZXing&&ZXing.BrowserMultiFormatReader)}
+function acceptLiveBarcode(val){const now=Date.now();if(val&&(val!==state.lastCameraCode||now-state.lastCameraAt>1800)){state.lastCameraCode=val;state.lastCameraAt=now;submitCheck(val)}}
+async function startCamera(){
+  if(inspectionBusy())return;
+  if (HAS_NATIVE_MES) {
+    $('#cameraSupport').textContent='使用 iPhone 原生相機離線掃描一維條碼。';
+    window.NativeMES.scan('ONE_D');
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia){$('#cameraSupport').textContent='此手機無法在網頁內開相機，已改用拍照核對：先讀一維條碼，讀不到再 OCR 料號。';$('#photoInput').click();return}
+  stopCamera();
+  const native=await native1DFormats();
+  if(native.length){
+    try{state.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});const v=$('#video');v.srcObject=state.stream;await v.play();$('#videoWrap').classList.remove('hidden');const detector=new BarcodeDetector({formats:native});state.scanTimer=setInterval(async()=>{if(v.readyState<2)return;try{const codes=await detector.detect(v);if(codes.length)acceptLiveBarcode(codes[0].rawValue)}catch{}},160);$('#cameraSupport').textContent='一維條碼掃描中：請把綠色／橘色標籤上的條碼放進白色框內。';return}catch(e){stopCamera();console.warn('Native barcode scanner failed',e)}}
+  if(window.ZXing&&ZXing.BrowserMultiFormatReader){
+    try{const reader=new ZXing.BrowserMultiFormatReader(zxingHints(),180);state.zxingReader=reader;$('#videoWrap').classList.remove('hidden');$('#cameraSupport').textContent='一維條碼掃描中（相容模式）：請把條碼放進白色框內。';reader.decodeFromVideoDevice(undefined,'video',(result,err)=>{if(result)acceptLiveBarcode(result.getText?result.getText():result.text);if(err&&!(err instanceof ZXing.NotFoundException)&&!(err instanceof ZXing.ChecksumException)&&!(err instanceof ZXing.FormatException))console.warn(err)});return}catch(e){try{state.zxingReader?.reset()}catch{}state.zxingReader=null;$('#videoWrap').classList.add('hidden');console.warn('ZXing camera scanner failed',e)}
+  }
+  $('#cameraSupport').textContent='即時一維條碼元件無法使用，已改用拍照核對：先讀一維條碼，讀不到再 OCR 料號。';$('#photoInput').click();
+}
+function stopCamera(){if(state.scanTimer)clearInterval(state.scanTimer);state.scanTimer=null;if(state.stream)state.stream.getTracks().forEach(t=>t.stop());state.stream=null;if(state.zxingReader){try{state.zxingReader.reset()}catch{}state.zxingReader=null}const v=$('#video');try{v.pause();v.srcObject=null}catch{}$('#videoWrap').classList.add('hidden')}
+$('#cameraBtn').onclick=startCamera;$('#stopCameraBtn').onclick=stopCamera;
+function canonCode(v){return String(v??'').toUpperCase().replace(/[‐‑‒–—―]/g,'-').trim()}
+function exactBomFromValue(v){
+  const key=String(v??'').trim().replace(/^\]C1/i,'').trim().toUpperCase();
+  return key?(state.task?.i||[]).find(x=>x.c.toUpperCase()===key)||null:null;
+}
+function levenshtein(a,b){a=canonCode(a);b=canonCode(b);const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let prev=Array.from({length:n+1},(_,i)=>i),cur=new Array(n+1);for(let i=1;i<=m;i++){cur[0]=i;for(let j=1;j<=n;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));[prev,cur]=[cur,prev]}return prev[n]}
+function ocrTokens(text){
+  const tokens=canonCode(text).replace(/[^\S\r\n]*-[^\S\r\n]*/g,'-').match(/[A-Z0-9_.\/-]+/g)||[];
+  return [...new Set(tokens)].filter(x=>x.length>=7&&x.length<=100).slice(0,80);
+}
+function matchOcrToBom(text){
+  const items=state.task?.i||[],toks=ocrTokens(text);
+  if(!items.length||!toks.length)return {kind:'none'};
+  const keys=new Set(toks),exact=items.filter(item=>keys.has(canonCode(item.c)));
+  if(exact.length===1)return {kind:'exact',item:exact[0],score:1};
+  if(exact.length>1)return {kind:'ambiguous',token:exact.map(x=>x.c).join('、')};
+  let best=null,second=null;
+  for(const item of items){
+    const c=canonCode(item.c),limit=Math.max(1,Math.floor(c.length*.05));
+    if(c.length<7||c.length>100)continue;
+    for(const token of toks){
+      if(Math.abs(c.length-token.length)>limit)continue;
+      const d=levenshtein(c,token),ratio=1-d/Math.max(c.length,token.length);
+      if(d>limit||ratio<.94)continue;
+      const candidate={item,token,d,ratio};
+      if(!best||ratio>best.ratio){second=best;best=candidate}
+      else if(!second||ratio>second.ratio)second=candidate;
+    }
+  }
+  if(best){const maxDist=Math.max(1,Math.floor(canonCode(best.item.c).length*.05));const unique=!second||best.ratio-second.ratio>=.025||canonCode(second.item.c)===canonCode(best.item.c);if(best.d<=maxDist&&best.ratio>=.94&&unique)return {kind:'fuzzy',item:best.item,token:best.token,d:best.d,score:best.ratio}}
+  return {kind:'none'}
+}
+async function bitmapToCanvas(file,maxDim=1800){return imageFileToCanvasCompat(file,maxDim)}
+function labelPixel(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b),sat=mx?((mx-mn)/mx):0;const green=g>95&&g>r*1.12&&g>b*1.08&&sat>.18;const orange=r>145&&g>65&&g<r*.94&&b<125&&r>b*1.35&&sat>.25;return green||orange}
+function resizeCanvas(source,max){
+  if(Math.max(source.width,source.height)<=max)return source;
+  const ratio=max/Math.max(source.width,source.height),canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(source.width*ratio));canvas.height=Math.max(1,Math.round(source.height*ratio));
+  canvas.getContext('2d').drawImage(source,0,0,canvas.width,canvas.height);
+  return canvas;
+}
+function cropColoredLabel(source){try{const full=resizeCanvas(source,520),ctx=full.getContext('2d',{willReadFrequently:true}),im=ctx.getImageData(0,0,full.width,full.height),w=full.width,h=full.height,mask=new Uint8Array(w*h);for(let i=0,p=0;i<im.data.length;i+=4,p++)if(labelPixel(im.data[i],im.data[i+1],im.data[i+2]))mask[p]=1;
+    // Simple dilation closes black text gaps inside bright green/orange labels.
+    const dil=new Uint8Array(mask);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const p=y*w+x;if(mask[p])continue;let n=0;for(let yy=-1;yy<=1;yy++)for(let xx=-1;xx<=1;xx++)n+=mask[p+yy*w+xx];if(n>=3)dil[p]=1}
+    const seen=new Uint8Array(w*h);let best=null;const stack=[];for(let p=0;p<dil.length;p++){if(!dil[p]||seen[p])continue;let area=0,minx=w,miny=h,maxx=0,maxy=0;stack.push(p);seen[p]=1;while(stack.length){const q=stack.pop(),y=Math.floor(q/w),x=q-y*w;area++;if(x<minx)minx=x;if(x>maxx)maxx=x;if(y<miny)miny=y;if(y>maxy)maxy=y;for(const d of [-1,1,-w,w]){const z=q+d;if(z<0||z>=dil.length||seen[z]||!dil[z])continue;if((d===-1||d===1)&&Math.floor(z/w)!==y)continue;seen[z]=1;stack.push(z)}}const bw=maxx-minx+1,bh=maxy-miny+1;if(area>250&&bw>60&&bh>25){const score=area*(1+Math.min(2,bw/bh));if(!best||score>best.score)best={minx,miny,maxx,maxy,score}}}
+    if(!best)return null;const padX=Math.round((best.maxx-best.minx+1)*.08),padY=Math.round((best.maxy-best.miny+1)*.12),sx=Math.max(0,best.minx-padX),sy=Math.max(0,best.miny-padY),sw=Math.min(w-sx,best.maxx-best.minx+1+padX*2),sh=Math.min(h-sy,best.maxy-best.miny+1+padY*2);if(sw*sh>w*h*.78)return null;
+    const rx=source.width/w,ry=source.height/h,ox=Math.floor(sx*rx),oy=Math.floor(sy*ry),ow=Math.min(source.width-ox,Math.ceil(sw*rx)),oh=Math.min(source.height-oy,Math.ceil(sh*ry)),out=document.createElement('canvas');
+    out.width=ow;out.height=oh;out.getContext('2d').drawImage(source,ox,oy,ow,oh,0,0,ow,oh);
+    const bounds={left:best.minx/w,top:best.miny/h,right:(best.maxx+1)/w,bottom:(best.maxy+1)/h};
+    const croppedBounds={left:(bounds.left*source.width-ox)/ow,top:(bounds.top*source.height-oy)/oh,
+      right:(bounds.right*source.width-ox)/ow,bottom:(bounds.bottom*source.height-oy)/oh};
+    return {canvas:out,bounds,croppedBounds};
+  }catch{return null}}
+async function sourceToCanvas(src,maxDim=2400){if(src instanceof HTMLCanvasElement)return src;return bitmapToCanvas(src,maxDim)}
+function photoFailureFields(obj){
+  const unreadable=obj.kind==='unreadable',detected=obj.barcode||obj.match?.token||obj.ocrCandidate||'';
+  return {code:detected||(unreadable?'無法辨識':'待查驗'),status:unreadable?'PHOTO_UNREADABLE':'PHOTO_BAD',
+    source:'PHOTO',detectMethod:obj.kind==='ambiguous'?'多個候選，待查驗':unreadable?'無法辨識':'辨識結果與 BOM 不符',
+    rawDetected:detected,ocrText:obj.ocrText||'',suggestedCode:obj.match?.kind==='fuzzy'?obj.match.item.c:'',
+    error:obj.error||'',resolved:false,verification:2};
+}
+async function recordPhotoAbnormal(obj){
+  const h=newHistoryEntry(photoFailureFields(obj));
+  await commitPhotoProgress(state.checked,[...state.history,h],h,obj.data);
+  return h;
+}
+const modalIds=['photoSummaryModal','manualReviewModal','checkReportModal','bomPhotoModal'];
+let modalReturnFocus=null;
+function activeModal(){return modalIds.map(id=>document.getElementById(id)).find(el=>!el.classList.contains('hidden'))}
+function openModal(id,trigger=document.activeElement){
+  const el=document.getElementById(id);
+  if(!el.classList.contains('hidden'))return;
+  modalReturnFocus=trigger;
+  document.querySelector('main').inert=true;
+  el.classList.remove('hidden');
+  el.querySelector('.modal').focus({preventScroll:true});
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  if(el.classList.contains('hidden'))return;
+  el.classList.add('hidden');
+  el.dispatchEvent(new Event('mes-modal-close'));
+  document.querySelector('main').inert=false;
+  let focus=modalReturnFocus;
+  if(!focus||focus.disabled||!focus.getClientRects().length)focus=$('#workflowTitle');
+  focus.focus({preventScroll:true});
+  modalReturnFocus=null;
+}
+for(const id of modalIds){
+  const overlay=document.getElementById(id),dialog=overlay.querySelector('.modal');
+  dialog.tabIndex=-1;
+  dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  const title=dialog.querySelector('.summaryTitle');
+  title.id=id+'Title';dialog.setAttribute('aria-labelledby',title.id);
+}
+document.addEventListener('keydown',e=>{
+  const modal=activeModal();
+  if(!modal)return;
+  if(e.key==='Escape'){
+    e.preventDefault();
+    if(!state.writeBusy)closeModal(modal.id);
+  }else if(e.key==='Tab'){
+    const focusable=[...modal.querySelectorAll('button:not(:disabled),select:not(:disabled),input:not(:disabled),a[href]')]
+      .filter(el=>el.getClientRects().length);
+    if(!focusable.length){e.preventDefault();return}
+    const index=focusable.indexOf(document.activeElement);
+    if(index===-1||(e.shiftKey?index===0:index===focusable.length-1)){
+      e.preventDefault();focusable[e.shiftKey?focusable.length-1:0].focus();
+    }
+  }
+});
+function showPhotoSummary(r,trigger=r.received===1?$('#photoBtn'):$('#photoBatchBtn')){
+  $('#summaryWorkOrder').textContent=state.task?.w||'—';
+  $('#summaryReceived').textContent=r.received+' 張';
+  $('#summaryQualified').textContent=r.qualified+' 張';
+  $('#summaryAbnormal').textContent=r.abnormal+' 張';
+  $('#summaryUnreadable').textContent=r.unreadable+' 張';
+  $('#summaryState').textContent=r.error?`已儲存 ${r.saved} / ${r.received} 張`:r.abnormal?`完成，有 ${r.abnormal} 張待查驗`:'全部合格';
+  $('#summaryError').textContent=r.error||'';
+  $('#summaryError').classList.toggle('hidden',!r.error);
+  $('#summaryManualBtn').classList.toggle('hidden',!r.abnormal);
+  openModal('photoSummaryModal',trigger);
+}
+$('#summaryCloseBtn').onclick=()=>closeModal('photoSummaryModal');
+$('#summaryManualBtn').onclick=()=>{closeModal('photoSummaryModal');openManualReview()};
+function currentReviewables(){return failedHistory()}
+function setReviewBusy(busy){
+  state.writeBusy=busy;
+  for(const id of ['#manualReviewCloseBtn','#manualReviewRetakeBtn','#manualReviewSelect'])$(id).disabled=busy;
+  $('#manualReviewConfirmBtn').disabled=busy||!$('#manualReviewSelect').value;
+  const list=currentReviewables(),index=list.findIndex(h=>h.id===state.manualReviewId);
+  $('#reviewPreviousBtn').disabled=busy||index<=0;
+  $('#reviewNextBtn').disabled=busy||index<0||index>=list.length-1;
+}
+async function renderManualReview(){
+  const bad=currentReviewables();
+  if(!bad.length){state.manualReviewId=null;closeModal('manualReviewModal');return}
+  const idx=Math.max(0,bad.findIndex(h=>h.id===state.manualReviewId)),h=bad[idx];
+  state.manualReviewId=h.id;
+  $('#manualReviewPosition').textContent=`異常 ${idx+1} / ${bad.length}`;
+  $('#manualReviewStatus').textContent=statusText(h);
+  $('#manualReviewDetected').textContent=h.rawDetected||h.code||'無法辨識';
+  $('#manualReviewOcr').textContent=[h.ocrText?'OCR：'+h.ocrText:'',h.suggestedCode?'相近料號：'+h.suggestedCode:'',h.error||''].filter(Boolean).join('\n');
+  $('#manualReviewError').classList.add('hidden');
+  $('#manualReviewSelect').innerHTML='<option value="">請選擇料號</option>'+state.task.i.map(x=>`<option value="${esc(x.c)}">${esc(x.c)}${x.n?'｜'+esc(x.n):''}</option>`).join('');
+  setReviewBusy(state.writeBusy);
+  const img=$('#manualReviewPreview'),no=$('#manualReviewNoPhoto');
+  img.removeAttribute('src');img.classList.add('hidden');no.classList.remove('hidden');
+  openModal('manualReviewModal');
+  if(h.photoId){
+    const photo=await getPhoto(h.photoId).catch(()=>'');
+    if(photo&&state.manualReviewId===h.id&&activeModal()?.id==='manualReviewModal'){
+      img.src=photo;img.classList.remove('hidden');no.classList.add('hidden');
+    }
+  }
+}
+function openManualReview(id=''){
+  if(inspectionBusy())return;
+  state.manualReviewId=id||currentReviewables()[0]?.id||null;
+  renderManualReview();
+}
+function changeReview(offset){
+  const bad=currentReviewables(),idx=bad.findIndex(h=>h.id===state.manualReviewId),next=bad[idx+offset];
+  if(next&&!state.writeBusy){state.manualReviewId=next.id;renderManualReview()}
+}
+function replaceHistoryEntry(updated){return state.history.map(h=>h.id===updated.id?updated:h)}
+function reviewError(error){
+  const el=$('#manualReviewError');el.textContent=error.message;el.classList.remove('hidden');
+}
+$('#reviewPreviousBtn').onclick=()=>changeReview(-1);
+$('#reviewNextBtn').onclick=()=>changeReview(1);
+$('#manualReviewSelect').onchange=()=>setReviewBusy(state.writeBusy);
+$('#manualReviewCloseBtn').onclick=()=>{if(!state.writeBusy){state.manualReviewId=null;closeModal('manualReviewModal')}};
+$('#manualReviewConfirmBtn').onclick=async()=>{
+  if(inspectionBusy())return;
+  const h=currentReviewables().find(x=>x.id===state.manualReviewId),item=findItem($('#manualReviewSelect').value);
+  if(!h||!item)return;
+  setReviewBusy(true);
+  try{
+    const checked=new Set(state.checked);checked.add(materialKey(item.c));
+    const history=replaceHistoryEntry({...h,resolved:true,resolution:'人工判定合格',resolvedAt:localDT(),resolvedCode:item.c});
+    history.push(newHistoryEntry({code:item.c,status:'MANUAL_OK',name:item.n,source:'REVIEW',detectMethod:'人工查驗',linkedHistoryId:h.id,verification:2}));
+    await saveProgress(checked,history);renderTask();await renderManualReview();
+  }catch(e){reviewError(e)}
+  finally{setReviewBusy(false)}
+};
+$('#manualReviewRetakeBtn').onclick=async()=>{
+  if(inspectionBusy())return;
+  const h=currentReviewables().find(x=>x.id===state.manualReviewId);
+  try{const file=await IOS_MES.singlePhoto();if(file&&h)await applyRetakeToAbnormal(h,file)}
+  catch(e){reviewError(e)}
+};
+async function applyRetakeToAbnormal(h,file){
+  if(!h||!file||inspectionBusy())return;
+  setReviewBusy(true);
+  $('#manualReviewRetakeBtn').textContent='辨識補照中…';
+  try{
+    const a=await analyzePhotoFile(file,0,1,false);
+    if(a.kind==='qualified'){
+      const history=replaceHistoryEntry({...h,resolved:true,resolution:'重新補照合格',resolvedAt:localDT(),resolvedCode:a.item.c});
+      await checkCode(a.item.c,{history,source:'PHOTO',photoData:a.data,detectMethod:'重新補照 / '+a.detectMethod,rawDetected:a.rawDetected,ocrText:a.ocrText});
+    }else{
+      const fields=photoFailureFields(a);
+      const updated={...h,...fields,time:localDT(),detectMethod:'重新補照 / '+fields.detectMethod,
+        previousPhotoIds:historyPhotoIds(h),retakeCount:(h.retakeCount||0)+1};
+      await commitPhotoProgress(state.checked,replaceHistoryEntry(updated),updated,a.data);
+    }
+    await renderManualReview();
+  }catch(e){reviewError(e)}
+  finally{$('#manualReviewRetakeBtn').textContent='重新補照';setReviewBusy(false)}
+}
+$('#manualReviewRetakeInput').onchange=async e=>{const f=e.target.files?.[0],h=currentReviewables().find(x=>x.id===state.manualReviewId);try{if(f&&h)await applyRetakeToAbnormal(h,f)}finally{e.target.value=''}};
+function zxingDecodeCanvas(canvas){if(!window.ZXing)return '';try{const ctx=canvas.getContext('2d',{willReadFrequently:true}),im=ctx.getImageData(0,0,canvas.width,canvas.height),source=new ZXing.RGBLuminanceSource(im.data,canvas.width,canvas.height),bitmap=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(source)),reader=new ZXing.MultiFormatReader();reader.setHints(zxingHints());const r=reader.decode(bitmap);return r?.getText?r.getText():String(r?.text||'')}catch{return ''}}
+async function detectBarcodeOnSource(src){
+  if(HAS_NATIVE_MES){
+    const raw=await mesNativeAnalyze(src,'barcodes1d');
+    return raw?JSON.parse(raw):[];
+  }
+  const native=await native1DFormats();
+  if(native.length){try{
+    const det=new BarcodeDetector({formats:native}),r=await det.detect(src);
+    if(r.length)return r.filter(x=>x.rawValue).map(x=>({value:x.rawValue,
+      x:(x.boundingBox.x+x.boundingBox.width/2)/src.width,y:(x.boundingBox.y+x.boundingBox.height/2)/src.height}));
+  }catch{}}
+  if(window.ZXing){try{const c=await sourceToCanvas(src);const z=zxingDecodeCanvas(c);if(z)return [{value:z}]}catch{}}
+  return [];
+}
+async function getOcrWorker(){if(state.ocrWorker)return state.ocrWorker;if(state.ocrLoading)return state.ocrLoading;if(!window.Tesseract)throw new Error('OCR 元件尚未載入；請確認手機目前可連外網');state.ocrLoading=(async()=>{const worker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m?.progress!=null&&state.photoBatchBusy)$('#photoBatchStatus').textContent='OCR '+Math.round(m.progress*100)+'%｜'+(m.status||'辨識中')}});await worker.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/.' ,tessedit_pageseg_mode:'11',preserve_interword_spaces:'1'});state.ocrWorker=worker;return worker})();try{return await state.ocrLoading}finally{state.ocrLoading=null}}
+async function recognizeMaterialText(file,labelCanvas=null){
+  if(HAS_NATIVE_MES) return mesNativeAnalyze(labelCanvas||file,'ocr');
+  const worker=await getOcrWorker();let target=labelCanvas||await bitmapToCanvas(file,2000);const r=await worker.recognize(target,{rotateAuto:true});return r?.data?.text||''}
+function updateBatchProgress(done,total,msg=''){const pct=total?Math.round(done/total*100):0;$('#photoBatchBox').classList.remove('hidden');$('#photoBatchTitle').textContent=`批次照片 ${done} / ${total}`;$('#photoBatchStatus').textContent=msg||'辨識中…';$('#photoBatchBar').style.width=pct+'%'}
+function ocrCandidateToken(text){return ocrTokens(text).find(t=>{const c=canonCode(t);return c.length>=10&&/[A-Z]/.test(c)&&/\d/.test(c)})||''}
+function barcodeValues(raw,bounds){
+  const inside=raw.filter(b=>!bounds||!Number.isFinite(b.x)||!Number.isFinite(b.y)||
+    (b.x>=bounds.left&&b.x<=bounds.right&&b.y>=bounds.top&&b.y<=bounds.bottom));
+  return [...new Set(inside.map(b=>materialKey(b.value)).filter(Boolean))];
+}
+function enhancedOcrView(source,x=0,y=0,w=1,h=1){
+  const canvas=document.createElement('canvas'),width=source.width*w,height=source.height*h;
+  const scale=Math.min(2,2340/Math.max(width,height));
+  canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+  const ctx=canvas.getContext('2d');
+  ctx.filter='grayscale(1) contrast(1.4)';
+  ctx.drawImage(source,source.width*x,source.height*y,width,height,0,0,canvas.width,canvas.height);
+  return canvas;
+}
+function hasSimilarBomCode(item){
+  const code=canonCode(item.c);
+  return state.task.i.some(other=>{
+    const candidate=canonCode(other.c);
+    return other!==item&&candidate.length===code.length&&levenshtein(code,candidate)<=1;
+  });
+}
+function hasSplitOcrCode(text,code){
+  return canonCode(text).split(/\r?\n/).some(line=>{
+    const tokens=line.match(/[A-Z0-9_.\/-]+/g)||[];
+    return tokens.some((token,i)=>token.length>=2&&tokens[i+1]?.length>=2&&token+tokens[i+1]===code);
+  });
+}
+async function readOcrCandidate(source,label){
+  const views=label?[
+    ()=>label.canvas,
+    ()=>enhancedOcrView(label.canvas),
+    ()=>source,
+    ()=>enhancedOcrView(label.canvas,.11,.29,.79,.55),
+    ()=>enhancedOcrView(label.canvas,.18,.49,.72,.31)
+  ]:[()=>source];
+  const readings=[];
+  let firstExact=null,exactText='',suggestion={kind:'none'},suggestionText='',error='';
+  for(const view of views){
+    let text='';
+    try{text=await recognizeMaterialText(view())}
+    catch(e){error=e.message;continue}
+    if(text.trim())readings.push(text);
+    const match=matchOcrToBom(text);
+    if(match.kind==='ambiguous')return {match,text,error:'照片中讀到了多個完整的 BOM 料號。'};
+    if(match.kind==='exact'){
+      if(firstExact&&firstExact.item!==match.item){
+        return {match:{kind:'ambiguous',token:[firstExact.item.c,match.item.c].join('、')},text,
+          error:'不同讀取方式得到不同的完整料號。'};
+      }
+      if(firstExact||!hasSimilarBomCode(match.item))return {match,text};
+      firstExact=match;exactText=text;
+    }else if(match.kind==='fuzzy'&&(suggestion.kind!=='fuzzy'||match.score>suggestion.score)){
+      suggestion=match;suggestionText=text;
+    }
+  }
+  if(firstExact){
+    if(readings.some(text=>text!==exactText&&hasSplitOcrCode(text,canonCode(firstExact.item.c))))return {match:firstExact,text:exactText};
+    return {match:{kind:'fuzzy',item:firstExact.item,token:firstExact.item.c},text:exactText,
+      error:'BOM 有相近料號，完整讀值缺少第二次確認。'};
+  }
+  return {match:suggestion,text:suggestionText||readings[0]||'',error};
+}
+async function analyzePhotoFile(file,index,total,showProgress=true){
+  if(showProgress)updateBatchProgress(index,total,`第 ${index+1} 張：讀取一維條碼…`);
+  const source=await bitmapToCanvas(file,2400);
+  const data=resizeCanvas(source,1280).toDataURL('image/jpeg',.76);
+  const label=cropColoredLabel(source);
+  let raw=[],barcodeError='';
+  try{raw=await detectBarcodeOnSource(source)}catch(e){barcodeError=e.message}
+  const fullValues=barcodeValues(raw),possibleMaterials=fullValues.filter(value=>findItem(value));
+  if(possibleMaterials.length>1)return {kind:'ambiguous',data,barcode:possibleMaterials.join('、'),error:'照片讀到多個 BOM 料號。'};
+  let values=label?barcodeValues(raw,label.bounds):fullValues;
+  if(label&&!values.length)try{values=barcodeValues(await detectBarcodeOnSource(label.canvas),label.croppedBounds)}catch(e){barcodeError=e.message}
+  if(values.length>1)return {kind:'ambiguous',data,barcode:values.join('、'),error:'照片有多個不同的一維條碼。'};
+  if(values.length===1){
+    const item=exactBomFromValue(values[0]);
+    if(item&&possibleMaterials.some(value=>value!==materialKey(item.c))){
+      return {kind:'ambiguous',data,barcode:values[0],error:'標籤內外出現不同的 BOM 料號。'};
+    }
+    if(item)return {kind:'qualified',data,item,detectMethod:'一維條碼',rawDetected:values[0]};
+    return {kind:'mismatch',data,barcode:values[0],error:'標籤內的條碼沒有完全相同的 BOM 料號。'};
+  }
+  if(showProgress)updateBatchProgress(index,total,`第 ${index+1} 張：讀取標籤料號…`);
+  const {match,text:ocrText,error}=await readOcrCandidate(source,label);
+  if(match.kind==='exact'){
+    if(possibleMaterials.some(value=>value!==materialKey(match.item.c))){
+      return {kind:'ambiguous',data,barcode:possibleMaterials.join('、'),ocrText,error:'條碼與文字是不同的 BOM 料號。'};
+    }
+    return {kind:'qualified',data,item:match.item,detectMethod:'料號OCR',rawDetected:match.item.c,ocrText};
+  }
+  const ocrCandidate=ocrCandidateToken(ocrText);
+  const kind=match.kind==='ambiguous'?'ambiguous':match.kind==='fuzzy'||ocrCandidate||fullValues.length?'mismatch':'unreadable';
+  return {kind,data,ocrCandidate,ocrText,match,error:error||barcodeError};
+}
+async function processOnePhoto(file,index,total,showProgress=true){
+  let a;
+  try{a=await analyzePhotoFile(file,index,total,showProgress)}
+  catch(error){a={kind:'unreadable',error:'照片無法開啟：'+error.message}}
+  if(a.kind==='qualified'){
+    await checkCode(a.item.c,{source:'PHOTO',photoData:a.data,detectMethod:a.detectMethod,rawDetected:a.rawDetected,ocrText:a.ocrText});
+    return a.kind;
+  }
+  await recordPhotoAbnormal(a);
+  return a.kind;
+}
+const photoButtons=['#cameraBtn','#photoSessionBtn','#photoBtn','#photoBatchBtn','#checkBtn','#quickReviewBtn','#switchTaskBtn'];
+function setPhotoBusy(busy){
+  state.photoBatchBusy=busy;
+  for(const id of photoButtons)$(id).disabled=busy;
+}
+function photoResult(received=0){return {received,saved:0,qualified:0,abnormal:0,unreadable:0,error:''}}
+function countPhoto(result,kind){
+  result.saved++;
+  if(kind==='qualified')result.qualified++;
+  else{result.abnormal++;if(kind==='unreadable')result.unreadable++}
+}
+function finishPhotos(result,trigger){
+  setPhotoBusy(false);
+  $('#photoBatchBox').classList.add('hidden');
+  renderTask();
+  if(!result.received){
+    setHero(result.error?'warn':'idle',result.error?'相機未完成':'等待核對','',result.error||'掃條碼，或拍照辨識料號。');
+    return;
+  }
+  setHero(result.error?'bad':result.abnormal?'warn':'ok',result.error?'照片作業未全數完成':'照片核對完成',
+    `已儲存 ${result.saved} / ${result.received} 張`,result.error||`合格 ${result.qualified} 張，待查驗 ${result.abnormal} 張`);
+  showPhotoSummary(result,trigger);
+}
+async function processPhotoFiles(files){
+  if(!state.task||inspectionBusy())return;
+  const arr=[...files].slice(0,30);
+  if(!arr.length)return;
+  clearFeedback();
+  if(files.length>30)$('#cameraSupport').textContent='一次最多處理 30 張，已選入前 30 張。';
+  setPhotoBusy(true);
+  const result=photoResult(arr.length);
+  setHero('info','照片核對中','',`共 ${arr.length} 張`);
+  try{
+    for(const [index,file] of arr.entries()){
+      countPhoto(result,await processOnePhoto(file,index,arr.length));
+      updateBatchProgress(result.saved,arr.length,`已儲存 ${result.saved} 張，${result.abnormal} 張待查驗`);
+    }
+  }catch(e){result.error=e.message}
+  finally{finishPhotos(result)}
+}
+let cameraSession=null;
+function startCameraSession(){
+  if(!state.task||inspectionBusy()||!HAS_NATIVE_MES)return;
+  if(document.activeElement instanceof HTMLElement)document.activeElement.blur();
+  clearFeedback();setPhotoBusy(true);
+  cameraSession={result:photoResult(),queue:[],closed:false,draining:false,failed:false};
+  try{window.NativeMES.startPhotoSession()}
+  catch(e){window.__mesCameraEvent('finished',e.message)}
+}
+window.__mesCameraEvent=(kind,value)=>{
+  const s=cameraSession;
+  if(!s){if(kind==='photo')window.NativeMES.releaseSessionPhoto(value);return}
+  if(kind==='photo'){
+    s.result.received++;
+    s.queue.push(value);
+  }else if(kind==='finished'){
+    s.closed=true;
+    if(value&&!s.result.error)s.result.error=value;
+    if(s.result.saved<s.result.received&&!s.failed){
+      setHero('info','正在完成核對','',`已儲存 ${s.result.saved} / ${s.result.received} 張`);
+      updateBatchProgress(s.result.saved,s.result.received,'拍攝已完成，正在處理剩餘照片。');
+    }
+  }
+  drainCameraSession(s);
+};
+async function drainCameraSession(s){
+  if(s.draining)return;
+  s.draining=true;
+  while(s.queue.length){
+    const token=s.queue.shift();
+    try{
+      if(s.failed)continue;
+      const photo=await IOS_MES.captureData(token);
+      countPhoto(s.result,await processOnePhoto(photo,s.result.saved,s.result.received,false));
+      window.NativeMES.photoSessionProgress(s.result.saved);
+      if(s.closed)updateBatchProgress(s.result.saved,s.result.received,'正在完成剩餘照片核對。');
+    }catch(e){
+      s.failed=true;s.result.error=e.message;
+      if(!s.closed)window.NativeMES.finishPhotoSession();
+    }finally{window.NativeMES.releaseSessionPhoto(token)}
+  }
+  s.draining=false;
+  if(s.closed){cameraSession=null;finishPhotos(s.result,$('#photoSessionBtn'))}
+}
+$('#photoSessionBtn').onclick=startCameraSession;
+$('#photoBtn').onclick=async()=>{
+  if(inspectionBusy())return;
+  try{const photo=await IOS_MES.singlePhoto();if(photo)await processPhotoFiles([photo])}
+  catch(e){reportError(e.message)}
+};
+$('#photoBatchBtn').onclick=()=>{if(!inspectionBusy())$('#photoBatchInput').click()};
+$('#photoInput').onchange=async e=>{const fs=e.target.files;try{await processPhotoFiles(fs)}finally{e.target.value=''}};
+$('#photoBatchInput').onchange=async e=>{const fs=e.target.files;try{await processPhotoFiles(fs)}finally{e.target.value=''}};
+window.MESNativeBack = () => {
+  if(inspectionBusy())return true;
+  const modal=activeModal();
+  if(modal){closeModal(modal.id);return true}
+  if(!$('#scanPage').classList.contains('hidden')){
+    stopCamera(); stopTaskQrCamera(); showTab('gen');
+    return true;
+  }
+  return false;
+};
+if(HAS_NATIVE_MES) $('#stopCameraBtn').classList.add('hidden');
+else $('#photoSessionBtn').classList.add('hidden');
+setTaskReady(false);
+(async()=>{
+  $('#cameraSupport').textContent='可使用原生相機掃描一維條碼。照片核對：一維條碼 → 讀不到則 OCR 料號 → 與 BOM 料號比對。';
+  try{
+    const stored=await IOS_MES.get('progress',RESUME_KEY);
+    if(!state.task&&!taskLoading)resumeTask=JSON.parse(stored||'null');
+    updateResumeButton();
+  }catch(e){reportError('無法讀取上次巡檢任務。'+e.message)}
+})();
+</script>
+<script src="bom-photo.js"></script>
+</body></html>

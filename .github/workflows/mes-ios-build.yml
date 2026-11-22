@@ -1,0 +1,31 @@
+name: MES v0.5.9 iPhone build
+
+on:
+  push:
+    branches:
+      - codex/mes-ios-ipa-v059
+    paths:
+      - mes-ios/BUILD_IPA_REQUEST
+
+permissions:
+  contents: read
+
+jobs:
+  iphone:
+    if: github.repository == 't7228226/ROSARIO01' && github.ref_name == 'codex/mes-ios-ipa-v059'
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Build iPhone package for local signing
+        run: bash mes-ios/tools/build-unsigned-ipa.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: MES_iOS_v0.5.9_Unsigned
+          path: |
+            mes-ios/build/unsigned/MES_iOS_v0.5.9_Unsigned.ipa
+            mes-ios/build/unsigned/MES_iOS_v0.5.9_Unsigned.ipa.sha256
+          if-no-files-found: error
+          retention-days: 1
