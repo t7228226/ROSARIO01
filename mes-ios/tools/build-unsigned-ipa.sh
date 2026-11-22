@@ -26,7 +26,7 @@ info="$app/Info.plist"
 [[ "$( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$info" )" == 3 ]]
 [[ -f "$app/WebAssets/index.html" && -f "$app/WebAssets/ios-bridge.js" && -f "$app/WebAssets/bom-photo.js" ]]
 [[ ! -e "$app/embedded.mobileprovision" ]]
-xcrun lipo -verify_arch arm64 "$app/MES"
+xcrun lipo "$app/MES" -verify_arch arm64
 
 mkdir -p "$scratch/Payload" "$root/build/unsigned"
 ditto "$app" "$scratch/Payload/MES.app"
