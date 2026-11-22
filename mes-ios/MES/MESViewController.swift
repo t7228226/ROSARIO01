@@ -168,7 +168,7 @@ final class MESViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private func emit(_ receiver: String, event: String, value: String) {
         web?.callAsyncJavaScript("window[receiver]?.(event, value); return null;",
                                  arguments: ["receiver": receiver, "event": event, "value": value],
-                                 in: nil, contentWorld: .page, completionHandler: nil)
+                                 in: nil, in: .page, completionHandler: nil)
     }
 
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo,
