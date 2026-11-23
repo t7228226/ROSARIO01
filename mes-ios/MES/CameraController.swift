@@ -21,22 +21,24 @@ private final class CameraHardware {
         session.sessionPreset = scanning ? .high : .photo
         session.addInput(input)
         device = camera
-        if scanning {
-            guard session.canAddOutput(metadataOutput) else { throw MESError.message("無法啟用掃描。") }
-            session.addOutput(metadataOutput)
-            metadataOutput.setMetadataObjectsDelegate(delegate, queue: .main)
-            let linear: [AVMetadataObject.ObjectType] = [.code39, .code39Mod43, .code93, .code128, .ean8, .ean13, .upce, .interleaved2of5, .itf14, .codabar]
-            let desired: [AVMetadataObject.ObjectType] = mode == .qr ? [.qr] : linear
-            let formats = desired.filter(metadataOutput.availableMetadataObjectTypes.contains)
-            guard !formats.isEmpty else { throw MESError.message("此裝置無法讀取所選條碼格式。") }
-            metadataOutput.metadataObjectTypes = formats
-        } else {
+        if !scanning {
             guard session.canAddOutput(photoOutput) else { throw MESError.message("無法開啟拍照。") }
             session.addOutput(photoOutput)
             photoOutput.maxPhotoQualityPrioritization = mode == .document ? .quality : .balanced
             if let connection = photoOutput.connection(with: .video), connection.isVideoOrientationSupported {
                 connection.videoOrientation = .portrait
             }
+        }
+        if (scanning || mode == .document) && session.canAddOutput(metadataOutput) {
+            session.addOutput(metadataOutput)
+            metadataOutput.setMetadataObjectsDelegate(delegate, queue: .main)
+            let linear: [AVMetadataObject.ObjectType] = [.code39, .code39Mod43, .code93, .code128, .ean8, .ean13, .upce, .interleaved2of5, .itf14, .codabar]
+            let desired: [AVMetadataObject.ObjectType] = mode == .linear ? linear : [.qr]
+            let formats = desired.filter(metadataOutput.availableMetadataObjectTypes.contains)
+            if !formats.isEmpty { metadataOutput.metadataObjectTypes = formats }
+            else if scanning { throw MESError.message("此裝置無法讀取所選條碼格式。") }
+        } else if scanning {
+            throw MESError.message("無法啟用掃描。")
         }
         return camera.hasTorch
     }
@@ -57,6 +59,7 @@ private final class CameraHardware {
 
 final class CameraController: UIViewController, AVCapturePhotoCaptureDelegate, AVCaptureMetadataOutputObjectsDelegate {
     enum Mode: Sendable { case document, batch, single, qr, linear }
+    static let openGallery = "gallery"
     nonisolated private let mode: Mode
     private let onPhoto: (Data) -> Void
     private let onFinish: (String, String?) -> Void
@@ -67,6 +70,7 @@ final class CameraController: UIViewController, AVCapturePhotoCaptureDelegate, A
     private let shutter = UIButton(type: .system)
     private let lamp = UIButton(type: .system)
     private let done = UIButton(type: .system)
+    private let gallery = UIButton(type: .system)
     private var ready = false
     private var finished = false
     private var ending = false
@@ -88,7 +92,7 @@ final class CameraController: UIViewController, AVCapturePhotoCaptureDelegate, A
     private var scanning: Bool { mode == .qr || mode == .linear }
     private var titleText: String {
         switch mode {
-        case .document: return "拍攝 BOM"
+        case .document: return "拍攝／掃描"
         case .batch: return "連續拍照核對"
         case .single: return "拍攝物料"
         case .qr: return "掃描工單 QR"
@@ -125,7 +129,9 @@ final class CameraController: UIViewController, AVCapturePhotoCaptureDelegate, A
         configure(done, title: mode == .batch ? "完成拍攝" : "取消", action: #selector(finish))
         lamp.isEnabled = false
         shutter.isEnabled = false
-        let controls = UIStackView(arrangedSubviews: scanning ? [lamp, done] : [lamp, shutter, done])
+        configure(gallery, title: "相簿", action: #selector(chooseGallery))
+        let actions = scanning ? [lamp, done] : mode == .document ? [lamp, shutter, gallery, done] : [lamp, shutter, done]
+        let controls = UIStackView(arrangedSubviews: actions)
         controls.spacing = 7
         controls.distribution = .fillEqually
         controls.layoutMargins = UIEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
@@ -232,9 +238,10 @@ final class CameraController: UIViewController, AVCapturePhotoCaptureDelegate, A
     }
 
     nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput objects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        let values = Set(objects.compactMap { ($0 as? AVMetadataMachineReadableCodeObject)?.stringValue })
+        let values = Set(objects.compactMap { ($0 as? AVMetadataMachineReadableCodeObject)?.stringValue }
+            .filter { mode != .document || $0.hasPrefix("MESCHK2:") || $0.contains("#task=") })
         DispatchQueue.main.async { [weak self] in
-            guard let self, !self.finished else { return }
+            guard let self, !self.finished, !self.ending, !self.taking else { return }
             if values.count == 1, let value = values.first { self.complete(value: value) }
             else if values.count > 1 { self.status.text = "畫面有多個條碼，請只對準目標。" }
             else { self.updateControls() }
@@ -254,12 +261,17 @@ final class CameraController: UIViewController, AVCapturePhotoCaptureDelegate, A
             let suffix = taking ? " · 正在拍攝…" : captured >= 30 ? " · 已達 30 張" : ""
             status.text = "已拍 \(captured) 張 · 已核對 \(reviewed) 張" + suffix
         } else if mode == .document {
-            status.text = taking ? "正在拍攝…" : "請拍清楚工單編號、序號與整欄料號。"
+            status.text = taking ? "正在拍攝…" : "對準工單 QR 直接掃描；紙本 BOM 請按拍攝。"
         } else if scanning {
             status.text = "將目標條碼放在畫面中央。"
         } else {
             status.text = taking ? "正在拍攝…" : "請將料號標籤拍清楚。"
         }
+    }
+
+    @objc private func chooseGallery() {
+        guard !taking, !ending, !finished else { return }
+        complete(value: Self.openGallery)
     }
 
     @objc func finish() {

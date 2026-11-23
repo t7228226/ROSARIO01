@@ -22,15 +22,17 @@ xcodebuild -project MES.xcodeproj -scheme MES -configuration Release \
 app="$products/MES.app"
 info="$app/Info.plist"
 [[ "$( /usr/libexec/PlistBuddy -c 'Print :CFBundleSupportedPlatforms:0' "$info" )" == iPhoneOS ]]
-[[ "$( /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info" )" == 0.5.9 ]]
-[[ "$( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$info" )" == 3 ]]
-[[ -f "$app/WebAssets/index.html" && -f "$app/WebAssets/ios-bridge.js" && -f "$app/WebAssets/bom-photo.js" ]]
+[[ "$( /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info" )" == 0.6.0 ]]
+[[ "$( /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$info" )" == 4 ]]
+for asset in index.html ios-bridge.js bom-photo.js report-image.js; do
+  cmp "$app/WebAssets/$asset" "$root/MES/WebAssets/$asset"
+done
 [[ ! -e "$app/embedded.mobileprovision" ]]
 xcrun lipo "$app/MES" -verify_arch arm64
 
 mkdir -p "$scratch/Payload" "$root/build/unsigned"
 ditto "$app" "$scratch/Payload/MES.app"
-name=MES_iOS_v0.5.9_Unsigned.ipa
+name=MES_iOS_v0.6.0_Unsigned.ipa
 ditto -c -k --keepParent "$scratch/Payload" "$scratch/$name"
 unzip -tq "$scratch/$name"
 mv -f "$scratch/$name" "$root/build/unsigned/$name"

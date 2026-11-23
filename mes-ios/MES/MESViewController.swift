@@ -1,4 +1,5 @@
 import AVFoundation
+import PhotosUI
 import UIKit
 import WebKit
 
@@ -16,7 +17,7 @@ private final class MessageHandler: NSObject, WKScriptMessageHandlerWithReply {
     }
 }
 
-final class MESViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
+final class MESViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, PHPickerViewControllerDelegate {
     private let io = DispatchQueue(label: "MES.storage-and-recognition", qos: .userInitiated)
     private var web: WKWebView?
     private var entry: URL?
@@ -102,6 +103,8 @@ final class MESViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             if action == "releaseCapture" { reply("", nil) }
             else if let data { reply(data.base64EncodedString(), nil) }
             else { reply(nil, "無法讀取相機照片。") }
+        case "shareReport":
+            shareReport(body, reply: reply)
         default:
             io.async {
                 let result = Result { try BridgeWorker.process(action, body: body) }
@@ -135,7 +138,14 @@ final class MESViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 else { still = data }
             }, onFinish: { [weak self] value, error in
                 self?.camera = nil
-                if stream { self?.emit(receiver, event: "finished", value: error ?? "") }
+                if mode == .document && value == CameraController.openGallery {
+                    self?.chooseBomPhoto()
+                } else if stream {
+                    if mode == .document && error == nil && !value.isEmpty {
+                        self?.emit(receiver, event: "qr", value: value)
+                    }
+                    self?.emit(receiver, event: "finished", value: error ?? "")
+                }
                 else if let error { reply(nil, error) }
                 else if mode == .single { reply(still?.base64EncodedString() ?? "", nil) }
                 else { reply(value, nil) }
@@ -151,6 +161,82 @@ final class MESViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 DispatchQueue.main.async { presentIfAllowed(allowed) }
             }
         default: presentIfAllowed(false)
+        }
+    }
+
+    private func chooseBomPhoto() {
+        guard presentedViewController == nil else {
+            emit("__mesBomCapture", event: "finished", value: "無法開啟相簿。")
+            return
+        }
+        var settings = PHPickerConfiguration()
+        settings.filter = .images
+        settings.selectionLimit = 1
+        let picker = PHPickerViewController(configuration: settings)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let provider = results.first?.itemProvider else {
+            emit("__mesBomCapture", event: "finished", value: "")
+            return
+        }
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
+            let image = (object as? UIImage)?.jpegData(compressionQuality: 0.95)
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if let image {
+                    self.sendCapture(image, receiver: "__mesBomCapture")
+                    self.emit("__mesBomCapture", event: "finished", value: "")
+                } else { self.emit("__mesBomCapture", event: "finished", value: "無法讀取相簿照片。") }
+            }
+        }
+    }
+
+    private func shareReport(_ body: [String: Any], reply: @escaping Reply) {
+        guard let encoded = body["images"] as? String, encoded.utf8.count <= 28 * 1024 * 1024 else {
+            reply(nil, "回報圖片資料過大，請改用匯出完整報告。")
+            return
+        }
+        let name = (body["name"] as? String ?? "MES核對回報")
+            .replacingOccurrences(of: "[^\\p{L}0-9_-]", with: "_", options: .regularExpression)
+            .prefix(80)
+        io.async { [weak self] in
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            let result = Result { () throws -> [URL] in
+                let entries = try JSONDecoder().decode([String].self, from: Data(encoded.utf8))
+                guard (1...40).contains(entries.count) else { throw MESError.message("圖片頁數有誤。") }
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                return try entries.enumerated().map { index, entry in
+                    guard let image = Data(base64Encoded: entry), image.starts(with: [137, 80, 78, 71, 13, 10, 26, 10]) else {
+                        throw MESError.message("無效的 PNG 圖片。")
+                    }
+                    let filename = "\(name)_\(index + 1).png"
+                    let file = directory.appendingPathComponent(filename)
+                    try image.write(to: file, options: .atomic)
+                    return file
+                }
+            }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.presentedViewController == nil, self.view.window != nil else {
+                    try? FileManager.default.removeItem(at: directory)
+                    reply(nil, "無法開啟系統分享選單。")
+                    return
+                }
+                switch result {
+                case .success(let files):
+                    let share = UIActivityViewController(activityItems: files, applicationActivities: nil)
+                    share.popoverPresentationController?.sourceView = self.view
+                    share.popoverPresentationController?.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 1, height: 1)
+                    share.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: directory) }
+                    self.present(share, animated: true) { reply("opened", nil) }
+                case .failure(let error):
+                    try? FileManager.default.removeItem(at: directory)
+                    reply(nil, error.localizedDescription)
+                }
+            }
         }
     }
 

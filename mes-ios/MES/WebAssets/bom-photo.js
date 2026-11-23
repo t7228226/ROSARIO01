@@ -96,6 +96,7 @@ const bomPhotoParser = (() => {
     const found=rows.filter(row => row.code).length;
     return {order:empty.order, rows, found, score:found*3+serials.length+(empty.order ? 4 : 0),
       headerEnd:first.y-(first.n-firstRow)*pitch,
+      completeSequence:first.n===1&&serials.length===rows.length&&last.y<.94,
       crop:{l:Math.max(0,left-.026),r:Math.min(1,Math.max(...hits.map(t => t.r))+.026)}};
   }
 
@@ -240,6 +241,45 @@ if (typeof document !== 'undefined' && HAS_NATIVE_MES &&
       frame.scrollTo(0,0);
     }
 
+    async function reliablePhoto(result,page) {
+      const valid=bomPhotoParser.validate(result.order,result.rows);
+      if(!result.completeSequence||!valid.ready||result.found<3||result.headerEnd<=.05)return false;
+      const header=await recognize(cropPage(page,0,.76,result.headerEnd-.012,2));
+      if(bomPhotoParser.parse(header).order!==result.order)return false;
+      const {l,r}=result.crop;
+      const strip=await recognize(cropPage(page,l,r,1,1.4));
+      const codes=new Map();
+      for(const [value] of strip){
+        const code=String(value).normalize('NFKC').trim().toUpperCase().replace(/[‐‑‒–—−]/g,'-');
+        codes.set(code,(codes.get(code)||0)+1);
+      }
+      return valid.items.every(row=>codes.get(row.code)===1);
+    }
+
+    async function enterPhotoTask(result) {
+      const text='工單編號\t'+result.order+'\n序號\t料號\t品名\n'+result.items.map(row=>row.n+'\t'+row.code+'\t').join('\n');
+      const items=parseBom(text);
+      if(items.length!==result.items.length)throw new Error('BOM 資料格式有誤，請重新核對。');
+      await loadTask(makeTask(items,{w:result.order}));
+      $('#bomText').value=text;
+      importMeta={w:result.order};
+      importSource='BOM 照片';
+      importedSheet='';
+      $('#excelFile').value='';
+      $('#excelInfo').textContent='已匯入工單及料號。';
+      $('#parseInfo').textContent='照片匯入未填入品名、規格及數量。';
+      updateSourceInfo(items);
+      invalidateBuiltTask();
+      closeModal(modalId);
+    }
+
+    async function importWorkQr(raw){
+      if(!/^(?:MESCHK2:)|(?:#|[?&])task=/.test(raw||''))return false;
+      await loadTask(taskFromScannedValue(raw));
+      closeModal(modalId);
+      return true;
+    }
+
     async function process(current, bitmap) {
       try {
         current.image=await imageFileToCanvasCompat(bitmap,2400);
@@ -286,6 +326,13 @@ if (typeof document !== 'undefined' && HAS_NATIVE_MES &&
         failure=true;
       }
       if (draft!==current) return;
+      try {
+        if(await reliablePhoto(best,rotate(current.image,bestTurn))&&draft===current){
+          await enterPhotoTask(bomPhotoParser.validate(best.order,best.rows));
+          return;
+        }
+      }catch { /* Show source image and preserve candidate rows for review. */ }
+      if(draft!==current)return;
       current.turn=bestTurn;
       await setPreview(current,bestTurn);
       if (draft!==current) return;
@@ -319,9 +366,12 @@ if (typeof document !== 'undefined' && HAS_NATIVE_MES &&
       let file;
       try {
         file=await source();
-        if (draft===current) await process(current,file);
-      } catch {
-        if (draft===current) setStatus('無法讀取照片，請重試。',true);
+        if(draft!==current)return;
+        let raw='';
+        try{raw=await decodeTaskQrImage(file)}catch{}
+        if(draft===current&&!await importWorkQr(raw)&&draft===current)await process(current,file);
+      } catch(error) {
+        if(draft===current)setStatus(error.message||'無法讀取照片，請重試。',true);
       } finally {
         if (draft===current) {
           current.busy=false;
@@ -337,9 +387,10 @@ if (typeof document !== 'undefined' && HAS_NATIVE_MES &&
       draft={rows:[],busy:false,camera:false};
       $('#bomPhotoAgreement').textContent='我已核對工單及完整料號清單。'+
         ($('#bomText').value.trim()?' 建立後會更新目前的 BOM 草稿。':'');
-      setStatus('可直接拍照，或選取裝置上的 BOM 照片。');
+      setStatus('可掃工單 QR、拍紙本 BOM，或從相簿選取照片。');
       updateControls();
       openModal(modalId,$('#bomPhotoBtn'));
+      camera.click();
     };
     $('#'+modalId).addEventListener('mes-modal-close',clearDraft);
     $('#bomCloseBtn').onclick=()=>closeModal(modalId);
@@ -351,7 +402,15 @@ if (typeof document !== 'undefined' && HAS_NATIVE_MES &&
       catch { window.__mesBomCapture('finished','無法啟用相機。可改用選取照片。'); }
     };
     window.__mesBomCapture=(kind,value)=>{
-      if (kind==='photo') {
+      if(kind==='gallery'){
+        if(draft){draft.camera=false;updateControls();input.click()}
+      }else if(kind==='qr'){
+        if(!draft?.camera)return;
+        draft.busy=true;updateControls();
+        void importWorkQr(value).catch(error=>setStatus('工單 QR 無法載入：'+error.message,true)).finally(()=>{
+          if(draft){draft.busy=false;updateControls()}
+        });
+      }else if (kind==='photo') {
         if (!draft?.camera) {
           window.NativeMES.releaseSessionPhoto(value);
           return;
@@ -402,27 +461,14 @@ if (typeof document !== 'undefined' && HAS_NATIVE_MES &&
     };
     order.oninput=editReview;
     checked.onchange=reviewState;
-    apply.onclick=()=>{
+    apply.onclick=async()=>{
       const result=reviewState();
-      if (!result.ready||!checked.checked||importBusy) return;
-      const filtered=result.items.map(row=>row.n+'\t'+row.code+'\t').join('\n');
-      const text='工單編號\t'+result.order+'\n序號\t料號\t品名\n'+filtered;
-      const items=parseBom(text);
-      if (items.length!==result.items.length) {
-        setStatus('BOM 資料格式有誤，請重新核對。',true);
-        return;
-      }
-      $('#bomText').value=text;
-      importMeta={};
-      importSource='BOM 照片';
-      importedSheet='';
-      $('#excelFile').value='';
-      $('#excelInfo').textContent='已匯入核對過的工單及料號。';
-      $('#parseInfo').textContent='照片匯入未填入品名、規格及數量。';
-      updateSourceInfo(items);
-      invalidateBuiltTask();
-      closeModal(modalId);
-      if (buildTask()) $('#modeSwitchBtn').focus({preventScroll:true});
+      if(!result.ready||!checked.checked||importBusy||draft.busy)return;
+      const current=draft;
+      current.busy=true;apply.disabled=true;updateControls();
+      try{await enterPhotoTask(result)}
+      catch(error){setStatus(error.message,true)}
+      finally{if(draft===current){current.busy=false;updateControls();reviewState()}}
     };
   })();
 }

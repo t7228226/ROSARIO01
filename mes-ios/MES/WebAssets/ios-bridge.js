@@ -24,6 +24,7 @@
     recognize:(data,mode,id)=>request('recognize',{data,mode},id),
     inflate:(data,id)=>request('inflate',{data},id),
     saveFile:(name,type,data,id)=>request('save',{name,type,data},id),
+    shareReport:(name,images,id)=>request('shareReport',{name,images},id),
     scan:mode=>send('scan',{mode}).then(
       value=>window.__mesNativeScanResult(mode,value,''),
       error=>window.__mesNativeScanResult(mode,'',errorText(error))),
