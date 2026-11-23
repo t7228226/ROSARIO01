@@ -1955,9 +1955,12 @@ function restoreTaskDetails(previous,next,rowsByCode,hasNamedQr){
     added=true;
     return {...old,n:name};
   });
-  if(!sameTask&&!added)return next;
+  const repeatedQr=hasNamedQr&&next.t&&previous.nameQrTime===next.t;
+  if(!sameTask&&!added&&!repeatedQr)return next;
   for(const row of merged)rowsByCode.set(materialKey(row.c),row);
-  return {...previous,i:merged};
+  const restored={...previous,i:merged};
+  if(!sameTask&&next.t)restored.nameQrTime=next.t;
+  return restored;
 }
 function storageKey(task=state.task){return task?'mescheck2:'+task.w+':'+task.t:''}
 async function saveProgress(checked,history){
