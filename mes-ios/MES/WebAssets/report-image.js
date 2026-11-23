@@ -9,7 +9,7 @@ function makeReportImages() {
   const fields=[...preview.querySelectorAll('.reportField,.reportResultBox')].map(field=>
     field.querySelector('small').textContent.trim()+'　'+field.querySelector('b').textContent.trim());
   const items=[...preview.querySelectorAll('.reportNameItem,.reportEmpty')].map(row=>
-    row.matches('.reportEmpty') ? [row.textContent.trim()] : [row.querySelector('b').textContent.trim(),row.querySelector('span').textContent.trim()]);
+    row.matches('.reportEmpty') ? [row.textContent.trim()] : [row.querySelector('b').textContent.trim(),row.querySelector('span')?.textContent.trim()].filter(Boolean));
   const lines=[];
   function add(text,size,bold=false,background=null){
     const style=(bold?'700 ':'400 ')+size+'px '+font;
@@ -24,7 +24,7 @@ function makeReportImages() {
     lines.push({text:line,style,size,background});
   }
   fields.forEach(text=>add(text,21));
-  add('核對品名',22,true);
+  add('核對明細',22,true);
   items.forEach((texts,index)=>texts.forEach((text,i)=>add(text,i?19:22,!i,index%2?'#edf7ef':'#f4f7f5')));
 
   const pages=[];
@@ -66,6 +66,7 @@ async function shareCheckReport(){
   state.exportBusy=true;button.disabled=back.disabled=true;status.textContent='正在製作圖片…';
   try{
     await new Promise(resolve=>setTimeout(resolve,16));
+    if($('#checkReportModal').classList.contains('hidden'))return;
     const images=makeReportImages();
     const name='MES核對回報_'+state.task.w.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,65);
     if(HAS_NATIVE_MES)await mesNativeRequest('shareReport',{name,images});
